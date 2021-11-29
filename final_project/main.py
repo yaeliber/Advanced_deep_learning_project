@@ -1,3 +1,4 @@
+import os
 import cv2
 import random
 import numpy as np
@@ -106,8 +107,8 @@ def print_wraped_images(img1, img2, img2_warped):
     print("\n\n")
 
 
-def eiffle():
-    path = "./temp_photos/Eiffel.jpg"
+def eiffle(path):
+    # path = "./temp_photos/Eiffel.jpg"
 
     img1 = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     img1 = cv2.resize(img1, (320, 240))
@@ -206,7 +207,16 @@ def ImagePreProcessing(path):
     # plt.imshow(warped_image)
     # plt.show()
     annotated_warp_image = warped_image.copy()
-    cv2.imwrite('./temp_photos/warped_image.jpg', cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
+    #create path to the warped image
+    tempArr = path.split(".")
+    newPath = "."
+    for i in range(len(tempArr)):
+        if i == (len(tempArr) - 1):
+            newPath += "new."
+        newPath += tempArr[i]
+    print(newPath)
+    #'./temp_photos/warped_image.jpg'
+    cv2.imwrite(newPath, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
     return warped_image
 
     # Ip1 = test_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
@@ -220,7 +230,12 @@ def ImagePreProcessing(path):
 
 
 if __name__ == '__main__':
-    eiffle()
+    folder = "./temp_photos"
+    for file in os.scandir(folder):
+        eiffle(folder +'/'+ file.name)
+
+
+    # eiffle("./temp_photos/Eiffel.jpg")
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
