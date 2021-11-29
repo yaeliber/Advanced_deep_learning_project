@@ -206,6 +206,7 @@ def ImagePreProcessing(path):
     # plt.imshow(warped_image)
     # plt.show()
     annotated_warp_image = warped_image.copy()
+    cv2.imwrite('./temp_photos/warped_image.jpg', cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
     return warped_image
 
     # Ip1 = test_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
