@@ -1,6 +1,8 @@
-import cv2 as cv2
-import matplotlib.pyplot as plt
+import cv2
+import random
 import numpy as np
+from numpy.linalg import inv
+import matplotlib.pyplot as plt
 
 
 def get_keypoints_and_descriptors(img1, img2):
@@ -52,7 +54,7 @@ def get_best_matches(desc1, desc2):
     # distance L2
     best_matches = []
     for m, n in matches:
-        if m.distance < 0.3 * n.distance:
+        if m.distance < 0.7 * n.distance:
             best_matches.append(m)
     print(len(best_matches))
     print("\n\n")
@@ -108,6 +110,7 @@ def eiffle():
     path = "./temp_photos/Eiffel.jpg"
 
     img1 = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+    img1 = cv2.resize(img1, (320, 240))
     gray_l = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
 
     fig = plt.figure(figsize=(10, 10))
@@ -127,7 +130,8 @@ def eiffle():
     center = (w / 2, h / 2)
 
     M = cv2.getRotationMatrix2D(center, 20, 1)
-    img2 = cv2.warpAffine(img1, M, (w, h))
+    #img2 = cv2.warpAffine(img1, M, (w, h))
+    img2 = ImagePreProcessing(path)
 
     fig = plt.figure(figsize=(10, 10))
     fig.add_subplot(1, 2, 1)
@@ -176,6 +180,46 @@ def room():
     print_wraped_images(room1, room2, img2_warped)
 
 
+def ImagePreProcessing(path):
+    img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (320, 240))
+
+    rho = 32
+    patch_size = 128
+    top_point = (32, 32)
+    left_point = (patch_size + 32, 32)
+    bottom_point = (patch_size + 32, patch_size + 32)
+    right_point = (32, patch_size + 32)
+    test_image = img.copy()
+    four_points = [top_point, left_point, bottom_point, right_point]
+
+    perturbed_four_points = []
+    for point in four_points:
+        perturbed_four_points.append((point[0] + random.randint(-rho, rho), point[1] + random.randint(-rho, rho)))
+
+    H = cv2.getPerspectiveTransform(np.float32(four_points), np.float32(perturbed_four_points))
+    H_inverse = inv(H)
+
+    warped_image = cv2.warpPerspective(img, H_inverse, (320, 240))
+    # plt.title("warped_image")
+    # plt.axis("off")
+    # plt.imshow(warped_image)
+    # plt.show()
+    annotated_warp_image = warped_image.copy()
+    return warped_image
+
+    # Ip1 = test_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
+    # Ip2 = warped_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
+    #
+    # training_image = np.dstack((Ip1, Ip2))
+    # H_four_points = np.subtract(np.array(perturbed_four_points), np.array(four_points))
+    # datum = (training_image, H_four_points)
+
+    # return datum
+
+
 if __name__ == '__main__':
-    room()
+    eiffle()
+
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
