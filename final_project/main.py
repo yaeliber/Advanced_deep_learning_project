@@ -107,10 +107,10 @@ def print_wraped_images(img1, img2, img2_warped):
     print("\n\n")
 
 
-def eiffle(path):
+def eiffle(path1, path2):
     # path = "./temp_photos/Eiffel.jpg"
 
-    img1 = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+    img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     img1 = cv2.resize(img1, (320, 240))
     gray_l = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
 
@@ -132,7 +132,10 @@ def eiffle(path):
 
     M = cv2.getRotationMatrix2D(center, 20, 1)
     #img2 = cv2.warpAffine(img1, M, (w, h))
-    img2 = ImagePreProcessing(path)
+
+    img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
+    img2 = cv2.resize(img2, (320, 240))
+    # img2 = ImagePreProcessing(path1)
 
     fig = plt.figure(figsize=(10, 10))
     fig.add_subplot(1, 2, 1)
@@ -232,7 +235,8 @@ def ImagePreProcessing(path):
 if __name__ == '__main__':
     folder = "./temp_photos"
     for file in os.scandir(folder):
-        eiffle(folder +'/'+ file.name)
+        if "new" not in file.name:
+            eiffle(folder +'/'+ file.name, folder +'/new'+ file.name)
 
 
     # eiffle("./temp_photos/Eiffel.jpg")

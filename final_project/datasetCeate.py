@@ -44,7 +44,6 @@ class dataset:
         #     if i == (len(tempArr) - 1):
         #         newPath += "new."
         #     newPath += tempArr[i]
-        newPath = "." + newPath
         print(newPath)
         # './temp_photos/warped_image.jpg'
         cv2.imwrite(newPath, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
@@ -52,7 +51,7 @@ class dataset:
 
     def PicturesInFolder(self, folderPath):
         for file in os.scandir(folderPath):
-            ImagePreProcessing(folderPath + '/' + file.name, folderPath + '/new' + file.name)
+            self.ImagePreProcessing(folderPath + '/' + file.name, folderPath + '/new' + file.name)
 
 d = dataset()
 d.PicturesInFolder("./temp_photos")
