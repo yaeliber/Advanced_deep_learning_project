@@ -3,7 +3,7 @@ import cv2
 import random
 import numpy as np
 from numpy.linalg import inv
-import matplotlib.pyplot as plt
+
 
 class dataset:
     def __init__(self):
@@ -50,8 +50,10 @@ class dataset:
         return warped_image
 
     def PicturesInFolder(self, folderPath):
+        new_folder_path = './homography_photos'
         for file in os.scandir(folderPath):
-            self.ImagePreProcessing(folderPath + '/' + file.name, folderPath + '/new' + file.name)
+            self.ImagePreProcessing(folderPath + '/' + file.name, new_folder_path + '/' + file.name)
+
 
 d = dataset()
 d.PicturesInFolder("./temp_photos")
