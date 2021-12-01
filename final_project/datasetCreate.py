@@ -51,10 +51,10 @@ class dataset:
         return warped_image
 
     def PicturesInFolder(self, folderPath):
-        resize_Path = './photos'
+        resize_path = './photos'
         homography_path = './homography_photos'
         for file in os.scandir(folderPath):
-            self.ImagePreProcessing(folderPath + '/' + file.name, resize_Path + '/' + file.name,
+            self.ImagePreProcessing(folderPath + '/' + file.name, resize_path + '/' + file.name,
                                     homography_path + '/' + file.name)
 
 
