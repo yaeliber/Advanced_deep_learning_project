@@ -10,7 +10,7 @@ class dataset:
         pass
         # self.folderPath = folderPath
 
-    def ImagePreProcessing(self, path, newPath):
+    def ImagePreProcessing(self, path, resize_Path, homography_path):
         img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (320, 240))
 
@@ -44,15 +44,18 @@ class dataset:
         #     if i == (len(tempArr) - 1):
         #         newPath += "new."
         #     newPath += tempArr[i]
-        print(newPath)
         # './temp_photos/warped_image.jpg'
-        cv2.imwrite(newPath, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
+
+        cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        cv2.imwrite(homography_path, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
         return warped_image
 
     def PicturesInFolder(self, folderPath):
-        new_folder_path = './homography_photos'
+        resize_Path = './photos'
+        homography_path = './homography_photos'
         for file in os.scandir(folderPath):
-            self.ImagePreProcessing(folderPath + '/' + file.name, new_folder_path + '/' + file.name)
+            self.ImagePreProcessing(folderPath + '/' + file.name, resize_Path + '/' + file.name,
+                                    homography_path + '/' + file.name)
 
 
 d = dataset()
