@@ -53,16 +53,19 @@ class dataset:
         return warped_image
 
     def PicturesInFolder(self, folderPath, resize_path, homography_path):
-        # resize_path = './photos'
-        # homography_path = './homography_photos'
+        # assert(not os.path.exists(folderPath))
         for file in os.scandir(folderPath):
-            print(file)
             self.ImagePreProcessing(folderPath + '/' + file.name, resize_path + '/' + file.name,
                                     homography_path + '/' + file.name)
+            print(file.name)
 
 
 d = dataset()
-# d.PicturesInFolder("./temp_photos")
+# path = "./temp_photos"
+# resize_path = './photos'
+# homography_path = './homography_photos'
+# d.PicturesInFolder(path, resize_path, homography_path)
+# print(os.getcwd())
 path = '../datasets/paris_1/paris/eiffel'
 resize_path = '../resize_datasets/eiffel'
 homography_path = '../homography_datasets/eiffel'
