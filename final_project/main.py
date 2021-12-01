@@ -159,8 +159,8 @@ def eiffle(path1, path2):
 
 
 def room():
-    path1 = "./temp_photos/room1.jpeg"
-    path2 = "./temp_photos/room2.jpeg"
+    path1 = "./photos/room2.jpeg"
+    path2 = "./homography_photos/room2.jpeg"
 
     room1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     room2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
@@ -233,13 +233,4 @@ def ImagePreProcessing(path):
 
 
 if __name__ == '__main__':
-    folder = "./temp_photos"
-    for file in os.scandir(folder):
-        if "new" not in file.name:
-            eiffle(folder +'/'+ file.name, folder +'/new'+ file.name)
-
-
-    # eiffle("./temp_photos/Eiffel.jpg")
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    room()
