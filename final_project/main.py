@@ -54,9 +54,10 @@ def get_best_matches(desc1, desc2):
     # store all the good matches as per Lowe's ratio test.
     # distance L2
     best_matches = []
-    for m, n in matches:
-        if m.distance < 0.7 * n.distance:
+    for m, n in matches: # for every descriptor, take closest two matches
+        if m.distance < 0.7 * n.distance: # best match has to be this much closer than second best
             best_matches.append(m)
+
     print(len(best_matches))
     print("\n\n")
 
