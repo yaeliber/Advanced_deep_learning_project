@@ -160,8 +160,10 @@ def eiffle(path1, path2):
 
 
 def room():
-    path1 = "./photos/room2.jpeg"
-    path2 = "./homography_photos/room2.jpeg"
+    path1 = "C:/Users/Yael/Desktop/final_project/resize_datasets/eiffel/paris_eiffel_000166.jpg"
+    path2 = "C:/Users/Yael/Desktop/final_project/homography_datasets/eiffel/paris_eiffel_000166.jpg"
+    # path1 = "./photos/room2.jpeg"
+    # path2 = "./homography_photos/room2.jpeg"
 
     room1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     room2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
