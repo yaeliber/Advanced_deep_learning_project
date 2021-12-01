@@ -33,19 +33,6 @@ class dataset:
         H_inverse = inv(H)
 
         warped_image = cv2.warpPerspective(img, H_inverse, (320, 240))
-        # plt.title("warped_image")
-        # plt.axis("off")
-        # plt.imshow(warped_image)
-        # plt.show()
-        annotated_warp_image = warped_image.copy()
-        # create path to the warped image
-        # tempArr = path.split(".")
-        # newPath = "."
-        # for i in range(len(tempArr)):
-        #     if i == (len(tempArr) - 1):
-        #         newPath += "new."
-        #     newPath += tempArr[i]
-        # './temp_photos/warped_image.jpg'
 
         cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         cv2.imwrite(homography_path, cv2.cvtColor(
@@ -53,7 +40,7 @@ class dataset:
         return warped_image
 
     def PicturesInFolder(self, folderPath, resize_path, homography_path):
-        assert(os.path.exists(folderPath))
+        assert (os.path.exists(folderPath))
         for file in os.scandir(folderPath):
             self.ImagePreProcessing(folderPath + '/' + file.name, resize_path + '/' + file.name,
                                     homography_path + '/' + file.name)
@@ -64,7 +51,6 @@ path = "./temp_photos"
 resize_path = './photos'
 homography_path = './homography_photos'
 d.PicturesInFolder(path, resize_path, homography_path)
-
 
 # path = '../../datasets/paris_1/paris/eiffel'
 # resize_path = '../../resize_datasets/eiffel'
