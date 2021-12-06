@@ -159,9 +159,9 @@ def eiffle(path1, path2):
     print_wraped_images(img1, img2, img2_warped)
 
 
-def room():
-    path1 = "C:/Users/Yael/Desktop/final_project/resize_datasets/eiffel/paris_eiffel_000166.jpg"
-    path2 = "C:/Users/Yael/Desktop/final_project/homography_datasets/eiffel/paris_eiffel_000166.jpg"
+def make_match(path1, path2):
+    # path1 = "C:/Users/Yael/Desktop/final_project/resize_datasets/eiffel/paris_eiffel_000166.jpg"
+    # path2 = "C:/Users/Yael/Desktop/final_project/homography_datasets/eiffel/paris_eiffel_000166.jpg"
     # path1 = "./photos/room2.jpeg"
     # path2 = "./homography_photos/room2.jpeg"
 
@@ -236,4 +236,6 @@ def ImagePreProcessing(path):
 
 
 if __name__ == '__main__':
-    room()
+    path1 = "./photos/room2.jpeg"
+    path2 = "./homography_photos/room2.jpeg"
+    make_match(path1, path2)
