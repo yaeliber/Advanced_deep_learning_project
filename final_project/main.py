@@ -15,6 +15,10 @@ def get_keypoints_and_descriptors(img1, img2):
     # find the keypoints and descriptors with chosen feature_extractor
     kp1, desc1 = feature_extractor.detectAndCompute(img1, None)
     kp2, desc2 = feature_extractor.detectAndCompute(img2, None)
+    print("====================================================================")
+    for k in kp1:
+        print("x = ", k.pt[0], "     y = ", k.pt[1])
+    print("====================================================================")
     print("img1", img1.shape)
     print("kp1", len(kp1))
     print("kp2", len(kp2))
@@ -54,8 +58,8 @@ def get_best_matches(desc1, desc2):
     # store all the good matches as per Lowe's ratio test.
     # distance L2
     best_matches = []
-    for m, n in matches: # for every descriptor, take closest two matches
-        if m.distance < 0.7 * n.distance: # best match has to be this much closer than second best
+    for m, n in matches:  # for every descriptor, take closest two matches
+        if m.distance < 0.7 * n.distance:  # best match has to be this much closer than second best
             best_matches.append(m)
 
     print(len(best_matches))
@@ -132,7 +136,7 @@ def eiffle(path1, path2):
     center = (w / 2, h / 2)
 
     M = cv2.getRotationMatrix2D(center, 20, 1)
-    #img2 = cv2.warpAffine(img1, M, (w, h))
+    # img2 = cv2.warpAffine(img1, M, (w, h))
 
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     img2 = cv2.resize(img2, (320, 240))
@@ -213,7 +217,7 @@ def ImagePreProcessing(path):
     # plt.imshow(warped_image)
     # plt.show()
     annotated_warp_image = warped_image.copy()
-    #create path to the warped image
+    # create path to the warped image
     tempArr = path.split(".")
     newPath = "."
     for i in range(len(tempArr)):
@@ -221,7 +225,7 @@ def ImagePreProcessing(path):
             newPath += "new."
         newPath += tempArr[i]
     print(newPath)
-    #'./temp_photos/warped_image.jpg'
+    # './temp_photos/warped_image.jpg'
     cv2.imwrite(newPath, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
     return warped_image
 
