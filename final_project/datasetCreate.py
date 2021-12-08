@@ -28,11 +28,10 @@ class dataset:
             perturbed_four_points.append(
                 (point[0] + random.randint(-rho, rho), point[1] + random.randint(-rho, rho)))
 
-        H = cv2.getPerspectiveTransform(np.float32(
-            four_points), np.float32(perturbed_four_points))
-        H_inverse = inv(H)
+        H = cv2.getPerspectiveTransform(np.float32(perturbed_four_points), np.float32(
+            four_points))
 
-        warped_image = cv2.warpPerspective(img, H_inverse, (320, 240))
+        warped_image = cv2.warpPerspective(img, H, (320, 240))
 
         cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         cv2.imwrite(homography_path, cv2.cvtColor(
