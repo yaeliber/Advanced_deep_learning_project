@@ -75,6 +75,18 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
 
     M, I, J = splitKeyPoints(H, kp1, kp2)
 
+    keyOriginal = cv2.drawKeypoints(img, M[0][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    keyRotated = cv2.drawKeypoints(warped_image, M[1][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    fig = plt.figure(figsize=(10, 10))
+    fig.add_subplot(1, 2, 1)
+    plt.imshow(keyOriginal)
+    # plt.plot(M[0][0].pt[0], M[0][0].pt[1], 'ro')
+
+    fig.add_subplot(1, 2, 2)
+    plt.imshow(keyRotated)
+    # plt.plot(M[1][0], M[1][1], 'ro')
+    plt.show()
+
     mk1 = keyPointsToArray(M[0])
     mk2 = keyPointsToArray(M[1])
     M = [mk1, mk2]
@@ -97,11 +109,12 @@ def PicturesInFolder(folderPath, resize_path, homography_path, params_path):
 def splitKeyPoints(H, kp1, kp2):
     M, I, J = [[], []], [], []
     match_2 = []
-    min = 10000000
+
     for k1 in kp1:
         # vector of (x,y,1)
         kv1 = np.array([k1.pt[0], k1.pt[1], 1])
         kv1 = H.dot(kv1)
+        # print(kv1)
         match = False
 
         for k2 in kp2:
@@ -110,7 +123,7 @@ def splitKeyPoints(H, kp1, kp2):
             dist = np.linalg.norm(kv1 - kv2)  # L2
 
             # k1, k2 are match
-            if dist <= 4:
+            if dist <= 1:
                 match = True
                 match_2.append(k2)
                 M[0].append(k1)
@@ -137,5 +150,3 @@ resize_path = './photos'
 homography_path = './homography_photos'
 params_path = "./params"
 PicturesInFolder(path, resize_path, homography_path, params_path)
-
-
