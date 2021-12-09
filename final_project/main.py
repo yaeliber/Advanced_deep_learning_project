@@ -6,42 +6,6 @@ from numpy.linalg import inv
 import matplotlib.pyplot as plt
 
 
-def get_keypoints_and_descriptors(img1, img2):
-    print("--------- In get_keypoints_and_descriptors ---------")
-    # use orb if sift is not installed
-    # feature_extractor = cv2.xfeatures2d.SIFT_create()
-    feature_extractor = cv2.SIFT_create()
-
-    # find the keypoints and descriptors with chosen feature_extractor
-    kp1, desc1 = feature_extractor.detectAndCompute(img1, None)
-    kp2, desc2 = feature_extractor.detectAndCompute(img2, None)
-    print("====================================================================")
-    for k in kp1:
-        print("x = ", k.pt[0], "     y = ", k.pt[1])
-    print("====================================================================")
-    print("img1", img1.shape)
-    print("kp1", len(kp1))
-    print("kp2", len(kp2))
-
-    keyOriginal = cv2.drawKeypoints(img1, kp1, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    keyRotated = cv2.drawKeypoints(img2, kp2, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.title("keyOriginalPoints")
-    plt.axis("off")
-    plt.imshow(keyOriginal)
-
-    fig.add_subplot(1, 2, 2)
-    plt.title("keyRotatedPoints")
-    plt.axis("off")
-    plt.imshow(keyRotated)
-    plt.show()
-    print("\n\n")
-
-    return kp1, desc1, kp2, desc2
-
-
 def get_best_matches(desc1, desc2):
     print("--------- In get_best_matches ---------")
     FLANN_INDEX_KDTREE = 1
@@ -112,57 +76,6 @@ def print_wraped_images(img1, img2, img2_warped):
     print("\n\n")
 
 
-def eiffle(path1, path2):
-    # path = "./temp_photos/Eiffel.jpg"
-
-    img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
-    img1 = cv2.resize(img1, (320, 240))
-    gray_l = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
-
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.axis("off")
-    plt.title("original")
-    plt.imshow(img1)
-
-    fig.add_subplot(1, 2, 2)
-    plt.axis("off")
-    plt.title("gray")
-    plt.imshow(gray_l, cmap="gray")
-    plt.show()
-
-    # rotating
-    h, w = img1.shape[:2]  # 2, בלי עומק
-    center = (w / 2, h / 2)
-
-    M = cv2.getRotationMatrix2D(center, 20, 1)
-    # img2 = cv2.warpAffine(img1, M, (w, h))
-
-    img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
-    img2 = cv2.resize(img2, (320, 240))
-    # img2 = ImagePreProcessing(path1)
-
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.title("original")
-    plt.axis("off")
-    plt.imshow(img1)
-
-    fig.add_subplot(1, 2, 2)
-    plt.title("rotated")
-    plt.axis("off")
-    plt.imshow(img2)
-    plt.show()
-
-    kp1, desc1, kp2, desc2 = get_keypoints_and_descriptors(img1, img2)
-
-    best_matches = get_best_matches(desc1, desc2)
-
-    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
-
-    print_wraped_images(img1, img2, img2_warped)
-
-
 def make_match(path1, path2, path3):
     img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
@@ -192,54 +105,6 @@ def make_match(path1, path2, path3):
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
 
     print_wraped_images(img1, img2, img2_warped)
-
-
-def ImagePreProcessing(path):
-    img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (320, 240))
-
-    rho = 32
-    patch_size = 128
-    top_point = (32, 32)
-    left_point = (patch_size + 32, 32)
-    bottom_point = (patch_size + 32, patch_size + 32)
-    right_point = (32, patch_size + 32)
-    test_image = img.copy()
-    four_points = [top_point, left_point, bottom_point, right_point]
-
-    perturbed_four_points = []
-    for point in four_points:
-        perturbed_four_points.append((point[0] + random.randint(-rho, rho), point[1] + random.randint(-rho, rho)))
-
-    H = cv2.getPerspectiveTransform(np.float32(four_points), np.float32(perturbed_four_points))
-    H_inverse = inv(H)
-
-    warped_image = cv2.warpPerspective(img, H_inverse, (320, 240))
-    # plt.title("warped_image")
-    # plt.axis("off")
-    # plt.imshow(warped_image)
-    # plt.show()
-    annotated_warp_image = warped_image.copy()
-    # create path to the warped image
-    tempArr = path.split(".")
-    newPath = "."
-    for i in range(len(tempArr)):
-        if i == (len(tempArr) - 1):
-            newPath += "new."
-        newPath += tempArr[i]
-    print(newPath)
-    # './temp_photos/warped_image.jpg'
-    cv2.imwrite(newPath, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
-    return warped_image
-
-    # Ip1 = test_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
-    # Ip2 = warped_image[top_point[1]:bottom_point[1], top_point[0]:bottom_point[0]]
-    #
-    # training_image = np.dstack((Ip1, Ip2))
-    # H_four_points = np.subtract(np.array(perturbed_four_points), np.array(four_points))
-    # datum = (training_image, H_four_points)
-
-    # return datum
 
 
 if __name__ == '__main__':
