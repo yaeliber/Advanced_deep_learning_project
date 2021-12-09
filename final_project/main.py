@@ -93,6 +93,7 @@ def make_match(path1, path2, path3):
 
     kp1 = []
     kp2 = []
+    # extract keyPoints from params we made on dataSetCreate
     for k in data['kp1']:
         kp1.append(cv2.KeyPoint(k[0][0], k[0][1], k[1], k[2], k[3], k[4], k[5]))
     for k in data['kp2']:

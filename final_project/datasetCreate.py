@@ -14,10 +14,10 @@ def get_keypoints_and_descriptors(img1, img2):
     # find the keypoints and descriptors with chosen feature_extractor
     kp1, desc1 = feature_extractor.detectAndCompute(img1, None)
     kp2, desc2 = feature_extractor.detectAndCompute(img2, None)
-    print("====================================================================")
-    for k in kp1:
-        print("x = ", k.pt[0], "     y = ", k.pt[1])
-    print("====================================================================")
+    # print("====================================================================")
+    # for k in kp1:
+    #     print("x = ", k.pt[0], "     y = ", k.pt[1])
+    # print("====================================================================")
     print("img1", img1.shape)
     print("kp1", len(kp1))
     print("kp2", len(kp2))
@@ -69,20 +69,20 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
         warped_image, cv2.COLOR_RGB2BGR))
 
     kp1, desc1, kp2, desc2 = get_keypoints_and_descriptors(img, warped_image)
-    kp1_arr = []
-    kp2_arr = []
-    for point in kp1:
-        temp = (point.pt, point.size, point.angle, point.response, point.octave,
-                point.class_id)
-        kp1_arr.append(temp)
 
-    for point in kp2:
-        temp = (point.pt, point.size, point.angle, point.response, point.octave,
-                point.class_id)
-        kp2_arr.append(temp)
+    kp1_arr = keyPointsToArray(kp1)
+    kp2_arr = keyPointsToArray(kp2)
+
+    M, I, J = splitKeyPoints(H, kp1, kp2)
+
+    mk1 = keyPointsToArray(M[0])
+    mk2 = keyPointsToArray(M[1])
+    M = [mk1, mk2]
+    I = keyPointsToArray(I)
+    J = keyPointsToArray(J)
 
     np.savez(params_path + '.npz', H=np.array(H), kp1=np.array(kp1_arr), desc1=np.array(desc1), kp2=np.array(kp2_arr),
-             desc2=np.array(desc2))
+             desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J))
 
     return warped_image
 
@@ -94,14 +94,42 @@ def PicturesInFolder(folderPath, resize_path, homography_path, params_path):
                            homography_path + '/' + file.name, params_path + '/' + file.name)
 
 
-def readNpzFiles(path):
-    assert (os.path.exists(path))
-    for file in os.scandir(path):
-        data = np.load(path + '/' + file.name, allow_pickle = True)
-        print("H: ", data['H'])
-        print("desc1: ", data['desc1'])
-        print("kp1: ", data['kp1'])
-        print()
+def splitKeyPoints(H, kp1, kp2):
+    M, I, J = [[], []], [], []
+    match_2 = []
+    min = 10000000
+    for k1 in kp1:
+        # vector of (x,y,1)
+        kv1 = np.array([k1.pt[0], k1.pt[1], 1])
+        kv1 = H.dot(kv1)
+        match = False
+
+        for k2 in kp2:
+            # vector of (x,y,1)
+            kv2 = np.array([k2.pt[0], k2.pt[1], 1])
+            dist = np.linalg.norm(kv1 - kv2)  # L2
+
+            # k1, k2 are match
+            if dist <= 4:
+                match = True
+                match_2.append(k2)
+                M[0].append(k1)
+                M[1].append(k2)
+        # k1 not match to any point in kp2
+        if not match:
+            I.append(k1)
+
+    J = [item for item in kp2 if item not in match_2]
+    return M, I, J
+
+
+def keyPointsToArray(kp):
+    kp_arr = []
+    for point in kp:
+        temp = (point.pt, point.size, point.angle, point.response, point.octave,
+                point.class_id)
+        kp_arr.append(temp)
+    return kp_arr
 
 
 path = "./temp_photos"
@@ -109,5 +137,5 @@ resize_path = './photos'
 homography_path = './homography_photos'
 params_path = "./params"
 PicturesInFolder(path, resize_path, homography_path, params_path)
-readNpzFiles(params_path)
+
 
