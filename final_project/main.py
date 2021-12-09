@@ -163,32 +163,35 @@ def eiffle(path1, path2):
     print_wraped_images(img1, img2, img2_warped)
 
 
-def make_match(path1, path2):
-    # path1 = "C:/Users/Yael/Desktop/final_project/resize_datasets/eiffel/paris_eiffel_000166.jpg"
-    # path2 = "C:/Users/Yael/Desktop/final_project/homography_datasets/eiffel/paris_eiffel_000166.jpg"
-    # path1 = "./photos/room2.jpeg"
-    # path2 = "./homography_photos/room2.jpeg"
-
-    room1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
-    room2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
+def make_match(path1, path2, path3):
+    img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
+    img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
+    data = np.load(path3, allow_pickle=True)
 
     fig = plt.figure(figsize=(10, 10))
     fig.add_subplot(1, 2, 1)
     plt.axis("off")
-    plt.imshow(room1)
+    plt.imshow(img1)
 
     fig.add_subplot(1, 2, 2)
     plt.axis("off")
-    plt.imshow(room2)
+    plt.imshow(img2)
     plt.show()
 
-    kp1, desc1, kp2, desc2 = get_keypoints_and_descriptors(room1, room2)
+    kp1 = []
+    kp2 = []
+    for k in data['kp1']:
+        kp1.append(cv2.KeyPoint(k[0][0], k[0][1], k[1], k[2], k[3], k[4], k[5]))
+    for k in data['kp2']:
+        kp2.append(cv2.KeyPoint(k[0][0], k[0][1], k[1], k[2], k[3], k[4], k[5]))
+
+    desc1, desc2 = data['desc1'], data['desc2']
 
     best_matches = get_best_matches(desc1, desc2)
 
-    H, mask, img2_warped = find_homography(room1, room2, kp1, kp2, best_matches)
+    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
 
-    print_wraped_images(room1, room2, img2_warped)
+    print_wraped_images(img1, img2, img2_warped)
 
 
 def ImagePreProcessing(path):
@@ -240,6 +243,8 @@ def ImagePreProcessing(path):
 
 
 if __name__ == '__main__':
-    path1 = "./photos/room2.jpeg"
-    path2 = "./homography_photos/room2.jpeg"
-    make_match(path1, path2)
+    file_name = "room2.jpeg"
+    path1 = "./photos/" + file_name
+    path2 = "./homography_photos/" + file_name
+    path3 = "./params/" + file_name + ".npz"
+    make_match(path1, path2, path3)

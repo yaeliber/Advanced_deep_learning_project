@@ -108,7 +108,7 @@ path = "./temp_photos"
 resize_path = './photos'
 homography_path = './homography_photos'
 params_path = "./params"
-PicturesInFolder(path, resize_path, homography_path, params_path)
+# PicturesInFolder(path, resize_path, homography_path, params_path)
 readNpzFiles(params_path)
 
 # path = '../../datasets/paris_1/paris/eiffel'
