@@ -111,15 +111,12 @@ def splitKeyPoints(H, kp1, kp2):
     match_2 = []
 
     for k1 in kp1:
-        # vector of (x,y,1)
-        kv1 = np.array([k1.pt[0], k1.pt[1], 1])
-        kv1 = H.dot(kv1)
-        # print(kv1)
+        kv1 = cv2.perspectiveTransform(np.float32(k1.pt).reshape(-1, 1, 2), H)
         match = False
 
         for k2 in kp2:
             # vector of (x,y,1)
-            kv2 = np.array([k2.pt[0], k2.pt[1], 1])
+            kv2 = np.array([k2.pt[0], k2.pt[1]])
             dist = np.linalg.norm(kv1 - kv2)  # L2
 
             # k1, k2 are match
