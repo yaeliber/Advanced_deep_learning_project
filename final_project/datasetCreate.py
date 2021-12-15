@@ -8,16 +8,12 @@ import matplotlib.pyplot as plt
 def get_keypoints_and_descriptors(img1, img2):
     print("--------- In get_keypoints_and_descriptors ---------")
     # use orb if sift is not installed
-    # feature_extractor = cv2.xfeatures2d.SIFT_create()
     feature_extractor = cv2.SIFT_create()
 
     # find the keypoints and descriptors with chosen feature_extractor
     kp1, desc1 = feature_extractor.detectAndCompute(img1, None)
     kp2, desc2 = feature_extractor.detectAndCompute(img2, None)
-    # print("====================================================================")
-    # for k in kp1:
-    #     print("x = ", k.pt[0], "     y = ", k.pt[1])
-    # print("====================================================================")
+
     print("img1", img1.shape)
     print("kp1", len(kp1))
     print("kp2", len(kp2))

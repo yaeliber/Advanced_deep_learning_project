@@ -107,10 +107,23 @@ def make_match(path1, path2, path3):
 
     print_wraped_images(img1, img2, img2_warped)
 
+    return H
+
+
+def H_error(H_dest_to_src, path):
+    # the func return the distance of H.dot(H*) from I
+    data = np.load(path, allow_pickle=True)
+    H_src_to_dest = data['H'] # Homograpy matrix from src to dest
+    error = H_src_to_dest.dot(H_dest_to_src) - np.eye(3)
+    error = np.sum(np.abs(error))
+    return error
+
 
 if __name__ == '__main__':
     file_name = "room2.jpeg"
     path1 = "./photos/" + file_name
     path2 = "./homography_photos/" + file_name
     path3 = "./params/" + file_name + ".npz"
-    make_match(path1, path2, path3)
+    H_dest_to_src = make_match(path1, path2, path3)
+    error = H_error(H_dest_to_src, path3)
+    print("error: ", error)
