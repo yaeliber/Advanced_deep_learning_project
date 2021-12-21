@@ -21,17 +21,17 @@ def get_keypoints_and_descriptors(img1, img2):
     keyOriginal = cv2.drawKeypoints(img1, kp1, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     keyRotated = cv2.drawKeypoints(img2, kp2, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.title("keyOriginalPoints")
-    plt.axis("off")
-    plt.imshow(keyOriginal)
-
-    fig.add_subplot(1, 2, 2)
-    plt.title("keyRotatedPoints")
-    plt.axis("off")
-    plt.imshow(keyRotated)
-    plt.show()
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 2, 1)
+    # plt.title("keyOriginalPoints")
+    # plt.axis("off")
+    # plt.imshow(keyOriginal)
+    #
+    # fig.add_subplot(1, 2, 2)
+    # plt.title("keyRotatedPoints")
+    # plt.axis("off")
+    # plt.imshow(keyRotated)
+    # plt.show()
     print("\n\n")
 
     return kp1, desc1, kp2, desc2
@@ -89,8 +89,10 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
     I = keyPointsToArray(I)
     J = keyPointsToArray(J)
 
+    H_mean, H_std = getDifficultLevel(H)
+
     np.savez(params_path + '.npz', H=np.array(H), kp1=np.array(kp1_arr), desc1=np.array(desc1), kp2=np.array(kp2_arr),
-             desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J))
+             desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J), H_mean=H_mean, H_std=H_std)
 
     return warped_image
 
@@ -138,8 +140,23 @@ def keyPointsToArray(kp):
     return kp_arr
 
 
-path = "./temp_photos"
-resize_path = './photos'
-homography_path = './homography_photos'
-params_path = "./params"
+def getDifficultLevel(H):
+    # if the H is close to I we are in a simple case (the new image close to the original)
+    # |H-I|.mean => 0
+    # |H-I|.std => 1
+    I = np.eye(3)
+    dif = np.abs(H - I)
+    H_mean = np.mean(dif)
+    H_std = np.std(dif)
+    return H_mean, H_std
+
+
+path = "./data/temp_photos"
+resize_path = './data/resize_photos'
+homography_path = './data/homography_photos/1'
+params_path = './data/params/1'
 PicturesInFolder(path, resize_path, homography_path, params_path)
+
+# homography_path = './data/homography_photos/2'
+# params_path = './data/params/2'
+# PicturesInFolder(path, resize_path, homography_path, params_path)
