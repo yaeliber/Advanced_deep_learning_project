@@ -73,15 +73,15 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
 
     keyOriginal = cv2.drawKeypoints(img, M[0][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
     keyRotated = cv2.drawKeypoints(warped_image, M[1][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.imshow(keyOriginal)
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 2, 1)
+    # plt.imshow(keyOriginal)
     # plt.plot(M[0][0].pt[0], M[0][0].pt[1], 'ro')
 
-    fig.add_subplot(1, 2, 2)
-    plt.imshow(keyRotated)
+    # fig.add_subplot(1, 2, 2)
+    # plt.imshow(keyRotated)
     # plt.plot(M[1][0], M[1][1], 'ro')
-    plt.show()
+    # plt.show()
 
     mk1 = keyPointsToArray(M[0])
     mk2 = keyPointsToArray(M[1])
@@ -156,6 +156,8 @@ resize_path = './data/resize_photos'
 homography_path = './data/homography_photos/1'
 params_path = './data/params/1'
 PicturesInFolder(path, resize_path, homography_path, params_path)
+
+# "../../datasets"
 
 # homography_path = './data/homography_photos/2'
 # params_path = './data/params/2'
