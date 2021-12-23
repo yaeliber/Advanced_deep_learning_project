@@ -4,6 +4,7 @@ import random
 import numpy as np
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
+from scipy.optimize import linear_sum_assignment
 
 
 def ArrayToKeyPoints(arr):
@@ -13,18 +14,13 @@ def ArrayToKeyPoints(arr):
     return kp
 
 
-def get_best_matches(desc1, desc2):
-    print("--------- In get_best_matches ---------")
+def knn_match(desc1, desc2):
+    print("--------- In knn_match ---------")
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-    # print("index_params:", index_params)
     search_params = dict(checks=50)
-    # print("search_params:", search_params)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
-    # print(flann)
     matches = flann.knnMatch(desc1, desc2, k=2)
-    # print("len of matches:", len(matches))
-    # print("matches:", matches)
 
     # store all the good matches as per Lowe's ratio test.
     # distance L2
@@ -33,10 +29,30 @@ def get_best_matches(desc1, desc2):
         if m.distance < 0.7 * n.distance:  # best match has to be this much closer than second best
             best_matches.append(m)
 
-    print(len(best_matches))
+    print("best_matches_knn: ", len(best_matches))
     print("\n\n")
 
     return best_matches
+
+
+def linear_assignment_match(desc1, desc2):
+    len1 = len(desc1)
+    len2 = len(desc2)
+    cost_matrix = np.empty((len1, len2), dtype=float)
+    print(cost_matrix.shape)
+    # fill the cost matrix by the distance between the descriptors
+    for i in range(len1):
+        for j in range(len2):
+            cost_matrix[i][j] = np.linalg.norm(desc1[i] - desc2[j])  # L2
+
+    row_ind, col_ind = linear_sum_assignment(cost_matrix)
+    match = []
+    for i in range(len(row_ind)):
+        dist = np.linalg.norm(desc1[row_ind[i]] - desc2[col_ind[i]])
+        if dist < 200:
+            match.append(cv2.DMatch(row_ind[i], col_ind[i], dist))
+    print("best_matches_linear_assignment: ", len(match))
+    return match
 
 
 def find_homography(img1, img2, kp1, kp2, best_matches):
@@ -83,7 +99,7 @@ def print_wraped_images(img1, img2, img2_warped):
     print("\n\n")
 
 
-def make_match(path1, path2, path3):
+def make_match(path1, path2, path3, algorithm):
     img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
@@ -102,17 +118,25 @@ def make_match(path1, path2, path3):
     kp1 = ArrayToKeyPoints(data['kp1'])
     kp2 = ArrayToKeyPoints(data['kp2'])
 
+    print("kp1: ", len(kp1))
+    print("kp2: ", len(kp2))
+
     desc1, desc2 = data['desc1'], data['desc2']
 
-    best_matches = get_best_matches(desc1, desc2)
+    if algorithm == "knn_match":
+        best_matches = knn_match(desc1, desc2)
+    if algorithm == "linear_assignment_match":
+        best_matches = linear_assignment_match(desc1, desc2)
 
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
 
     match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
+    error_H, H_mean, H_std = H_error(H, path3)
+
     print_wraped_images(img1, img2, img2_warped)
 
-    return H
+    return H, match_score, error_H, H_mean, H_std
 
 
 def get_match_score(kp1, kp2, best_matches, M, I, J):
@@ -190,18 +214,58 @@ def getDifficultLevel(H):
 
 
 if __name__ == '__main__':
-    file_name = "Eiffel.jpg"
-    path1 = "./data/resize_photos/" + file_name
-    path2 = "./data/homography_photos/2/" + file_name
-    path3 = "./data/params/2/" + file_name + ".npz"
-    H_dest_to_src = make_match(path1, path2, path3)
-    error, H_mean, H_std = H_error(H_dest_to_src, path3)
-    print("error: ", error)
+    folderPath = "./data/resize_photos/"
+    error_H_linear = []
+    error_H_knn = []
+    mean_H = []
+    match_score_linear = []
+    match_score_knn = []
+    assert (os.path.exists(folderPath))
+    for file in os.scandir(folderPath):
+        file_name = file.name
+        path1 = "./data/resize_photos/" + file_name
+        path2 = "./data/homography_photos/1/" + file_name
+        path3 = "./data/params/1/" + file_name + ".npz"
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
+                                                                           'linear_assignment_match')
+        error_H_linear.append(error_H1)
+        match_score_linear.append(match_score1)
+        mean_H.append(H_mean)
+
+        H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+        error_H_knn.append(error_H2)
+        match_score_knn.append(match_score2)
+
+    # file_name = "Eiffel.jpg"
+    # path1 = "./data/resize_photos/" + file_name
+    # path2 = "./data/homography_photos/2/" + file_name
+    # path3 = "./data/params/2/" + file_name + ".npz"
+    # H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
+    # H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+
+    plt.figure(figsize=(10, 10))
+    plt.subplot(2, 2, 1)
+    plt.title("error_H")
+    plt.plot(error_H_linear, 'or', label="linear")
+    plt.plot(error_H_knn, 'ob', label="knn")
+    plt.legend()
+
+    plt.subplot(2, 2, 2)
+    plt.title("match_score")
+    plt.plot(match_score_linear, 'or', label="linear")
+    plt.plot(match_score_knn, 'ob', label="knn")
+    plt.legend()
+
+    plt.subplot(2, 2, 3)
+    plt.title("H mean difficult")
+    plt.plot(mean_H, 'ob')
+    plt.show()
+    # print("error: ", error_H)
     print("H_mean: ", H_mean)
     print("H_std: ", H_std)
 
-    # path2 = "./data/homography_photos/2/" + file_name
-    # path3 = "./data/params/2/" + file_name + ".npz"
+    # path2 = "./data/homography_photos/1/" + file_name
+    # path3 = "./data/params/1/" + file_name + ".npz"
     # H_dest_to_src = make_match(path1, path2, path3)
     # error = H_error(H_dest_to_src, path3)
     # print("error: ", error)
