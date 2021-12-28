@@ -15,7 +15,7 @@ def ArrayToKeyPoints(arr):
     return kp
 
 
-def knn_match(desc1, desc2):
+def knn_match(desc1, desc2, flag=True):
     print("--------- In knn_match ---------")
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
@@ -27,7 +27,10 @@ def knn_match(desc1, desc2):
     # distance L2
     best_matches = []
     for m, n in matches:  # for every descriptor, take closest two matches
-        if m.distance < 0.7 * n.distance:  # best match has to be this much closer than second best
+        if flag:
+            if m.distance < 0.7 * n.distance:  # best match has to be this much closer than second best
+                best_matches.append(m)
+        else:
             best_matches.append(m)
 
     print("best_matches_knn: ", len(best_matches))
@@ -87,12 +90,12 @@ def sinkhorn_match(desc1, desc2):
     print("\nb len: ", len(b))
     print("b sum: ", np.sum(b))  # should be 1
 
-    res = ot.sinkhorn(a, b, cost_matrix, 1, method='sinkhorn_stabilized')
+    res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     # print(res)
     print("res shape", res.shape)
 
     max_index_arr = np.argmax(res, axis=1)
-    print("max_index_arr: ", max_index_arr)
+    # print("max_index_arr: ", max_index_arr)
 
     # temp = np.take_along_axis(res, np.expand_dims(max_index_arr, axis=-1), axis=-1).squeeze(axis=-1)
     # print("temp: ", temp)
@@ -108,7 +111,7 @@ def sinkhorn_match(desc1, desc2):
     return match
 
 
-def find_homography(img1, img2, kp1, kp2, best_matches):
+def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=""):
     print("--------- In find_homography ---------")
     src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches]).reshape(-1, 1, 2)
@@ -120,11 +123,12 @@ def find_homography(img1, img2, kp1, kp2, best_matches):
                        flags=2)
 
     img3 = cv2.drawMatches(img1, kp1, img2, kp2, best_matches, None, **draw_params)
-    fig = plt.figure(figsize=(10, 10))
-    plt.title("keypoints matches")
-    plt.axis("off")
-    plt.imshow(img3)
-    plt.show()
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.suptitle(algorithm)
+    # plt.title("keypoints matches")
+    # plt.axis("off")
+    # plt.imshow(img3)
+    # plt.show()
 
     img2_warped = cv2.warpPerspective(img2, H, (img2.shape[1], img2.shape[0]))
     print("\n\n")
@@ -157,15 +161,15 @@ def make_match(path1, path2, path3, algorithm):
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
 
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.axis("off")
-    plt.imshow(img1)
-
-    fig.add_subplot(1, 2, 2)
-    plt.axis("off")
-    plt.imshow(img2)
-    plt.show()
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 2, 1)
+    # plt.axis("off")
+    # plt.imshow(img1)
+    #
+    # fig.add_subplot(1, 2, 2)
+    # plt.axis("off")
+    # plt.imshow(img2)
+    # plt.show()
 
     # extract keyPoints from params we made on dataSetCreate
     kp1 = ArrayToKeyPoints(data['kp1'])
@@ -176,20 +180,22 @@ def make_match(path1, path2, path3, algorithm):
 
     desc1, desc2 = data['desc1'], data['desc2']
 
-    if algorithm == "knn_match":
-        best_matches = knn_match(desc1, desc2)
+    if algorithm == "knn_match":  # all knn matches without
+        best_matches = knn_match(desc1, desc2, False)
+    if algorithm == "knn_match_v2":
+        best_matches = knn_match(desc1, desc2, True)
     if algorithm == "linear_assignment_match":
         best_matches = linear_assignment_match(desc1, desc2)
     if algorithm == "sinkhorn_match":
         best_matches = sinkhorn_match(desc1, desc2)
 
-    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
+    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm)
 
     match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
     error_H, H_mean, H_std = H_error(H, path3)
 
-    print_wraped_images(img1, img2, img2_warped)
+    # print_wraped_images(img1, img2, img2_warped)
 
     return H, match_score, error_H, H_mean, H_std
 
@@ -268,58 +274,79 @@ def getDifficultLevel(H):
     return H_mean, H_std
 
 
-if __name__ == '__main__':
-    # folderPath = "./data/resize_photos/"
-    # error_H_linear = []
-    # error_H_knn = []
-    # mean_H = []
-    # match_score_linear = []
-    # match_score_knn = []
-    # assert (os.path.exists(folderPath))
-    # for file in os.scandir(folderPath):
-    #     file_name = file.name
-    #     path1 = "./data/resize_photos/" + file_name
-    #     path2 = "./data/homography_photos/1/" + file_name
-    #     path3 = "./data/params/1/" + file_name + ".npz"
-    #     H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
-    #                                                                        'linear_assignment_match')
-    #     error_H_linear.append(error_H1)
-    #     match_score_linear.append(match_score1)
-    #     mean_H.append(H_mean)
-    #
-    #     H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
-    #     error_H_knn.append(error_H2)
-    #     match_score_knn.append(match_score2)
+def main(folder_path, folder_number):
+    error_H_sinkhorn = []
+    error_H_knn = []
+    error_H_knn_v2 = []
+    mean_H = []
+    match_score_sinkhorn = []
+    match_score_knn = []
+    match_score_knn_v2 = []
+    assert (os.path.exists(folder_path))
+    for file in os.scandir(folder_path):
+        file_name = file.name
+        path1 = '../../data/resize_photos' + file_name
+        path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
+        path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
+        error_H_sinkhorn.append(error_H1)
+        match_score_sinkhorn.append(match_score1)
+        mean_H.append(H_mean)
 
-    # plt.figure(figsize=(10, 10))
-    # plt.subplot(2, 2, 1)
-    # plt.title("error_H")
-    # plt.plot(error_H_linear, 'or', label="linear")
-    # plt.plot(error_H_knn, 'ob', label="knn")
-    # plt.legend()
-    #
-    # plt.subplot(2, 2, 2)
-    # plt.title("match_score")
-    # plt.plot(match_score_linear, 'or', label="linear")
-    # plt.plot(match_score_knn, 'ob', label="knn")
-    # plt.legend()
-    #
-    # plt.subplot(2, 2, 3)
-    # plt.title("H mean difficult")
-    # plt.plot(mean_H, 'ob')
-    # plt.show()
-    # # print("error: ", error_H)
-    # print("H_mean: ", H_mean)
-    # print("H_std: ", H_std)
+        H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+        error_H_knn.append(error_H2)
+        match_score_knn.append(match_score2)
+
+        H2_dest_to_src, match_score3, error_H3, H_mean, H_std = make_match(path1, path2, path3, 'knn_match_v2')
+        error_H_knn_v2.append(error_H3)
+        match_score_knn_v2.append(match_score3)
+
+    plt.figure(figsize=(10, 10))
+    plt.subplot(1, 2, 1)
+    plt.title('error_H')
+    plt.plot(error_H_sinkhorn, 'or', label='sinkhorn')
+    plt.plot(error_H_knn, 'ob', label="knn")
+    plt.plot(error_H_knn_v2, 'og', label="knn_v2")
+    plt.legend()
+    plt.subplot(1, 2, 2)
+    plt.title("H mean difficult")
+    plt.plot(mean_H, 'ob')
+
+    plt.figure(figsize=(10, 10))
+    plt.title("match_score")
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.plot(match_score_sinkhorn, 'or', label="sinkhorn")
+    plt.plot(match_score_knn, 'ob', label="knn")
+    plt.plot(match_score_knn_v2, 'og', label="knn_v2")
+    plt.legend()
+
+    mean_MIJ_score = []
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn) / len(match_score_sinkhorn))
+    mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
+    mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
+    plt.figure(figsize=(5, 5))
+    labels = ['sinkhorn', 'knn', 'knn_v2']
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.bar(labels, mean_MIJ_score, width=0.4)
+    plt.show()
+
+
+if __name__ == '__main__':
+    # folder_path = "./data/resize_photos/"
+    folder_path = '../../data/resize_photos'
+    folder_number = 2
+    main(folder_path, folder_number)
 
     # =================================================================================================================
 
-    file_name = "Eiffel.jpg"
-    path1 = "./data/resize_photos/" + file_name
-    path2 = "./data/homography_photos/2/" + file_name
-    path3 = "./data/params/2/" + file_name + ".npz"
-    H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
-    H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+    # file_name = "paris.jpg"
+    # path1 = "./data/resize_photos/" + file_name
+    # path2 = "./data/homography_photos/2/" + file_name
+    # path3 = "./data/params/2/" + file_name + ".npz"
+    # H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
+    # H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
 
     # =================================================================================================================
 
