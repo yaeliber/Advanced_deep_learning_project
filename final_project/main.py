@@ -57,7 +57,7 @@ def linear_assignment_match(desc1, desc2):
 
 
 def sinkhorn_match(desc1, desc2):
-    dustbin_percentage = 0.3
+    dustbin_percentage = 0.4
     len1 = len(desc1)
     len2 = len(desc2)
     cost_matrix = np.empty((len1 + 1, len2 + 1), dtype=float)
@@ -82,16 +82,30 @@ def sinkhorn_match(desc1, desc2):
     b = [(1 - dustbin_percentage) / len2] * (len2 + 1)
     b[len2] = dustbin_percentage
 
-    print("a: ", a)
     print("a len: ", len(a))
     print("a sum: ", np.sum(a))  # should be 1
-    print("\nb: ", b)
-    print("b len: ", len(b))
+    print("\nb len: ", len(b))
     print("b sum: ", np.sum(b))  # should be 1
 
-    res = ot.sinkhorn(a, b, cost_matrix, 2, method='sinkhorn_log')
-    print(res)
+    res = ot.sinkhorn(a, b, cost_matrix, 1, method='sinkhorn_stabilized')
+    # print(res)
     print("res shape", res.shape)
+
+    max_index_arr = np.argmax(res, axis=1)
+    print("max_index_arr: ", max_index_arr)
+
+    # temp = np.take_along_axis(res, np.expand_dims(max_index_arr, axis=-1), axis=-1).squeeze(axis=-1)
+    # print("temp: ", temp)
+
+    match = []
+    for i in range(len1):
+        if max_index_arr[i] == len2:
+            continue
+        dist = np.linalg.norm(desc1[i] - desc2[max_index_arr[i]])
+        match.append(cv2.DMatch(i, max_index_arr[i], dist))
+
+    print("best_matches_sinkhorn: ", len(match))
+    return match
 
 
 def find_homography(img1, img2, kp1, kp2, best_matches):
@@ -162,12 +176,12 @@ def make_match(path1, path2, path3, algorithm):
 
     desc1, desc2 = data['desc1'], data['desc2']
 
-    sinkhorn_match(desc1, desc2)
-
     if algorithm == "knn_match":
         best_matches = knn_match(desc1, desc2)
     if algorithm == "linear_assignment_match":
         best_matches = linear_assignment_match(desc1, desc2)
+    if algorithm == "sinkhorn_match":
+        best_matches = sinkhorn_match(desc1, desc2)
 
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches)
 
@@ -304,7 +318,7 @@ if __name__ == '__main__':
     path1 = "./data/resize_photos/" + file_name
     path2 = "./data/homography_photos/2/" + file_name
     path3 = "./data/params/2/" + file_name + ".npz"
-    H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
+    H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
     H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
 
     # =================================================================================================================
