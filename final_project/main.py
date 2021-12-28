@@ -2,6 +2,7 @@ import os
 import cv2
 import random
 import numpy as np
+import ot as ot
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
@@ -53,6 +54,44 @@ def linear_assignment_match(desc1, desc2):
             match.append(cv2.DMatch(row_ind[i], col_ind[i], dist))
     print("best_matches_linear_assignment: ", len(match))
     return match
+
+
+def sinkhorn_match(desc1, desc2):
+    dustbin_percentage = 0.3
+    len1 = len(desc1)
+    len2 = len(desc2)
+    cost_matrix = np.empty((len1 + 1, len2 + 1), dtype=float)
+    print(cost_matrix.shape)
+
+    # fill the cost matrix by the distance between the descriptors
+    for i in range(len1):
+        for j in range(len2):
+            cost_matrix[i][j] = np.linalg.norm(desc1[i] - desc2[j])  # L2
+
+    # fill the dustbin rows and cols to 0
+    for i in range(len1 + 1):
+        cost_matrix[i][len2] = 0
+    for j in range(len2 + 1):
+        cost_matrix[len1][j] = 0
+
+    # unify distribution beside dustbin cell
+    a = [(1 - dustbin_percentage) / len1] * (len1 + 1)
+    a[len1] = dustbin_percentage
+
+    # unify distribution beside dustbin cell
+    b = [(1 - dustbin_percentage) / len2] * (len2 + 1)
+    b[len2] = dustbin_percentage
+
+    print("a: ", a)
+    print("a len: ", len(a))
+    print("a sum: ", np.sum(a))  # should be 1
+    print("\nb: ", b)
+    print("b len: ", len(b))
+    print("b sum: ", np.sum(b))  # should be 1
+
+    res = ot.sinkhorn(a, b, cost_matrix, 2, method='sinkhorn_log')
+    print(res)
+    print("res shape", res.shape)
 
 
 def find_homography(img1, img2, kp1, kp2, best_matches):
@@ -122,6 +161,8 @@ def make_match(path1, path2, path3, algorithm):
     print("kp2: ", len(kp2))
 
     desc1, desc2 = data['desc1'], data['desc2']
+
+    sinkhorn_match(desc1, desc2)
 
     if algorithm == "knn_match":
         best_matches = knn_match(desc1, desc2)
@@ -214,55 +255,59 @@ def getDifficultLevel(H):
 
 
 if __name__ == '__main__':
-    folderPath = "./data/resize_photos/"
-    error_H_linear = []
-    error_H_knn = []
-    mean_H = []
-    match_score_linear = []
-    match_score_knn = []
-    assert (os.path.exists(folderPath))
-    for file in os.scandir(folderPath):
-        file_name = file.name
-        path1 = "./data/resize_photos/" + file_name
-        path2 = "./data/homography_photos/1/" + file_name
-        path3 = "./data/params/1/" + file_name + ".npz"
-        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
-                                                                           'linear_assignment_match')
-        error_H_linear.append(error_H1)
-        match_score_linear.append(match_score1)
-        mean_H.append(H_mean)
+    # folderPath = "./data/resize_photos/"
+    # error_H_linear = []
+    # error_H_knn = []
+    # mean_H = []
+    # match_score_linear = []
+    # match_score_knn = []
+    # assert (os.path.exists(folderPath))
+    # for file in os.scandir(folderPath):
+    #     file_name = file.name
+    #     path1 = "./data/resize_photos/" + file_name
+    #     path2 = "./data/homography_photos/1/" + file_name
+    #     path3 = "./data/params/1/" + file_name + ".npz"
+    #     H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
+    #                                                                        'linear_assignment_match')
+    #     error_H_linear.append(error_H1)
+    #     match_score_linear.append(match_score1)
+    #     mean_H.append(H_mean)
+    #
+    #     H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+    #     error_H_knn.append(error_H2)
+    #     match_score_knn.append(match_score2)
 
-        H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
-        error_H_knn.append(error_H2)
-        match_score_knn.append(match_score2)
+    # plt.figure(figsize=(10, 10))
+    # plt.subplot(2, 2, 1)
+    # plt.title("error_H")
+    # plt.plot(error_H_linear, 'or', label="linear")
+    # plt.plot(error_H_knn, 'ob', label="knn")
+    # plt.legend()
+    #
+    # plt.subplot(2, 2, 2)
+    # plt.title("match_score")
+    # plt.plot(match_score_linear, 'or', label="linear")
+    # plt.plot(match_score_knn, 'ob', label="knn")
+    # plt.legend()
+    #
+    # plt.subplot(2, 2, 3)
+    # plt.title("H mean difficult")
+    # plt.plot(mean_H, 'ob')
+    # plt.show()
+    # # print("error: ", error_H)
+    # print("H_mean: ", H_mean)
+    # print("H_std: ", H_std)
 
-    # file_name = "Eiffel.jpg"
-    # path1 = "./data/resize_photos/" + file_name
-    # path2 = "./data/homography_photos/2/" + file_name
-    # path3 = "./data/params/2/" + file_name + ".npz"
-    # H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
-    # H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+    # =================================================================================================================
 
-    plt.figure(figsize=(10, 10))
-    plt.subplot(2, 2, 1)
-    plt.title("error_H")
-    plt.plot(error_H_linear, 'or', label="linear")
-    plt.plot(error_H_knn, 'ob', label="knn")
-    plt.legend()
+    file_name = "Eiffel.jpg"
+    path1 = "./data/resize_photos/" + file_name
+    path2 = "./data/homography_photos/2/" + file_name
+    path3 = "./data/params/2/" + file_name + ".npz"
+    H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
+    H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
 
-    plt.subplot(2, 2, 2)
-    plt.title("match_score")
-    plt.plot(match_score_linear, 'or', label="linear")
-    plt.plot(match_score_knn, 'ob', label="knn")
-    plt.legend()
-
-    plt.subplot(2, 2, 3)
-    plt.title("H mean difficult")
-    plt.plot(mean_H, 'ob')
-    plt.show()
-    # print("error: ", error_H)
-    print("H_mean: ", H_mean)
-    print("H_std: ", H_std)
+    # =================================================================================================================
 
     # path2 = "./data/homography_photos/1/" + file_name
     # path3 = "./data/params/1/" + file_name + ".npz"
