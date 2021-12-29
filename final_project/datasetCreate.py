@@ -37,7 +37,8 @@ def get_keypoints_and_descriptors(img1, img2):
     return kp1, desc1, kp2, desc2
 
 
-def ImagePreProcessing(path, resize_Path, homography_path, params_path):
+def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path):
+    print(path)
     img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (320, 240))
 
@@ -60,14 +61,20 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
 
     warped_image = cv2.warpPerspective(img, H, (320, 240))
 
-    cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-    cv2.imwrite(homography_path, cv2.cvtColor(
-        warped_image, cv2.COLOR_RGB2BGR))
 
     kp1, desc1, kp2, desc2 = get_keypoints_and_descriptors(img, warped_image)
 
     kp1_arr = keyPointsToArray(kp1)
     kp2_arr = keyPointsToArray(kp2)
+
+    if len(kp1_arr) < 4 or len(kp2_arr) < 4:
+        print("remove")
+        cv2.imwrite('./data/error_img/' + img_name, cv2.imread(path))
+        os.remove(path)
+        return
+
+    cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(homography_path, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
 
     M, I, J = splitKeyPoints(H, kp1, kp2)
 
@@ -100,7 +107,7 @@ def ImagePreProcessing(path, resize_Path, homography_path, params_path):
 def PicturesInFolder(folderPath, resize_path, homography_path, params_path):
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
-        ImagePreProcessing(folderPath + '/' + file.name, resize_path + '/' + file.name,
+        ImagePreProcessing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
                            homography_path + '/' + file.name, params_path + '/' + file.name)
 
 
