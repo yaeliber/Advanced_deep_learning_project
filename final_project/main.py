@@ -119,7 +119,9 @@ def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=""):
     src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-
+    print('H: ', H)
+    if H is None:
+        return None, None, None
     matchesMask = mask.ravel().tolist()
     draw_params = dict(singlePointColor=None,
                        matchesMask=matchesMask,  # draw only inliers
@@ -194,7 +196,11 @@ def make_match(path1, path2, path3, algorithm):
 
     if len(best_matches) < 4:
         return None, 0, 50, 50, 10
+
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm)
+
+    if H is None:
+        return None, 0, 50, 50, 10
 
     match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
