@@ -16,7 +16,10 @@ def ArrayToKeyPoints(arr):
 
 
 def knn_match(desc1, desc2, flag=True):
-    print("--------- In knn_match ---------")
+    if flag:
+        print("--------- In knn_match_v2 ---------")
+    else:
+        print("--------- In knn_match ---------")
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
     search_params = dict(checks=50)
@@ -28,7 +31,7 @@ def knn_match(desc1, desc2, flag=True):
     best_matches = []
     for m, n in matches:  # for every descriptor, take closest two matches
         if flag:
-            if m.distance < 0.7 * n.distance:  # best match has to be this much closer than second best
+            if m.distance < 0.8 * n.distance:  # best match has to be this much closer than second best
                 best_matches.append(m)
         else:
             best_matches.append(m)
@@ -85,10 +88,10 @@ def sinkhorn_match(desc1, desc2):
     b = [(1 - dustbin_percentage) / len2] * (len2 + 1)
     b[len2] = dustbin_percentage
 
-    print("a len: ", len(a))
-    print("a sum: ", np.sum(a))  # should be 1
-    print("\nb len: ", len(b))
-    print("b sum: ", np.sum(b))  # should be 1
+    # print("a len: ", len(a))
+    # print("a sum: ", np.sum(a))  # should be 1
+    # print("\nb len: ", len(b))
+    # print("b sum: ", np.sum(b))  # should be 1
 
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     # print(res)
@@ -189,6 +192,8 @@ def make_match(path1, path2, path3, algorithm):
     if algorithm == "sinkhorn_match":
         best_matches = sinkhorn_match(desc1, desc2)
 
+    if len(best_matches) < 4:
+        return None, 0, 50, 50, 10
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm)
 
     match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
@@ -285,7 +290,8 @@ def main(folder_path, folder_number):
     assert (os.path.exists(folder_path))
     for file in os.scandir(folder_path):
         file_name = file.name
-        path1 = '../../data/resize_photos' + file_name
+        print('\n================================ ', file_name, ' ================================')
+        path1 = '../../data/resize_photos/' + file_name
         path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
         path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
         H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
@@ -300,6 +306,7 @@ def main(folder_path, folder_number):
         H2_dest_to_src, match_score3, error_H3, H_mean, H_std = make_match(path1, path2, path3, 'knn_match_v2')
         error_H_knn_v2.append(error_H3)
         match_score_knn_v2.append(match_score3)
+        print()
 
     plt.figure(figsize=(10, 10))
     plt.subplot(1, 2, 1)
@@ -335,8 +342,8 @@ def main(folder_path, folder_number):
 
 if __name__ == '__main__':
     # folder_path = "./data/resize_photos/"
-    folder_path = '../../data/resize_photos'
-    folder_number = 2
+    folder_path = '../../data/resize_photos/'
+    folder_number = 1
     main(folder_path, folder_number)
 
     # =================================================================================================================
