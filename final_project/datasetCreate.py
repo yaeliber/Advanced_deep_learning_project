@@ -38,7 +38,6 @@ def get_keypoints_and_descriptors(img1, img2):
 
 
 def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path):
-    print(path)
     img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (320, 240))
 
@@ -69,7 +68,7 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
 
     if len(kp1_arr) < 4 or len(kp2_arr) < 4:
         print("remove")
-        cv2.imwrite('./data/error_img/' + img_name, cv2.imread(path))
+        cv2.imwrite('../../data/error_img/' + img_name, cv2.imread(path))
         os.remove(path)
         return
 
@@ -158,11 +157,11 @@ def getDifficultLevel(H):
     return H_mean, H_std
 
 
-path = "./data/temp_photos"
-resize_path = './data/resize_photos'
-homography_path = './data/homography_photos/1'
-params_path = './data/params/1'
-PicturesInFolder(path, resize_path, homography_path, params_path)
+# path = "./data/temp_photos"
+# resize_path = './data/resize_photos'
+# homography_path = './data/homography_photos/1'
+# params_path = './data/params/1'
+# PicturesInFolder(path, resize_path, homography_path, params_path)
 
 # path = '../../data/original_photos'
 # resize_path = '../../data/resize_photos'
