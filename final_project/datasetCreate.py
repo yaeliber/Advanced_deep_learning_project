@@ -106,6 +106,7 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
 def PicturesInFolder(folderPath, resize_path, homography_path, params_path):
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
+        print(file.name)
         ImagePreProcessing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
                            homography_path + '/' + file.name, params_path + '/' + file.name)
 
@@ -163,7 +164,7 @@ def getDifficultLevel(H):
 # params_path = './data/params/1'
 # PicturesInFolder(path, resize_path, homography_path, params_path)
 
-# path = '../../data/original_photos'
+# path = '../../data/restart_img'
 # resize_path = '../../data/resize_photos'
 # homography_path = '../../data/homography_photos/1'
 # params_path = '../../data/params/1'

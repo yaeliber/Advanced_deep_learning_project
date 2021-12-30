@@ -334,10 +334,22 @@ def main(folder_path, folder_number):
     plt.plot(match_score_knn_v2, 'og', label='knn_v2')
     plt.legend()
 
+    # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
     mean_MIJ_score.append(np.sum(match_score_sinkhorn) / len(match_score_sinkhorn))
     mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
     mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
+    plt.figure(figsize=(5, 5))
+    labels = ['sinkhorn', 'knn', 'knn_v2']
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.bar(labels, mean_MIJ_score, width=0.4)
+
+    # A graph that shows the H_error average according to each algorithm
+    mean_H_error = []
+    mean_H_error.append(np.sum(error_H_sinkhorn) / len(error_H_sinkhorn))
+    mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
+    mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
     plt.figure(figsize=(5, 5))
     labels = ['sinkhorn', 'knn', 'knn_v2']
     ax = plt.gca()
