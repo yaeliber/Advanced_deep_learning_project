@@ -340,6 +340,7 @@ def main(folder_path, folder_number):
     mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
     mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
     plt.figure(figsize=(5, 5))
+    plt.title('mean_match_score')
     labels = ['sinkhorn', 'knn', 'knn_v2']
     ax = plt.gca()
     ax.set_ylim([0, 1])
@@ -352,9 +353,8 @@ def main(folder_path, folder_number):
     mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
     mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
     plt.figure(figsize=(5, 5))
+    plt.title('mean_H_error')
     labels = ['sinkhorn', 'knn', 'knn_v2']
-    ax = plt.gca()
-    ax.set_ylim([0, 1])
     plt.bar(labels, mean_H_error, width=0.4)
 
     plt.show()
