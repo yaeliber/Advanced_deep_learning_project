@@ -345,6 +345,7 @@ def main(folder_path, folder_number):
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
 
+
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
     mean_H_error.append(np.sum(error_H_sinkhorn) / len(error_H_sinkhorn))
@@ -354,7 +355,8 @@ def main(folder_path, folder_number):
     labels = ['sinkhorn', 'knn', 'knn_v2']
     ax = plt.gca()
     ax.set_ylim([0, 1])
-    plt.bar(labels, mean_MIJ_score, width=0.4)
+    plt.bar(labels, mean_H_error, width=0.4)
+
     plt.show()
 
 

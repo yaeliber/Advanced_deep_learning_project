@@ -27,7 +27,7 @@ for file in os.scandir('../../data/params/1/'):
     data = np.load(file, allow_pickle=True)#path3 npz
     H_mean = data['H_mean']
 
-    if H_mean > 500:#1.25*1e6:
+    if H_mean > 200:#1.25*1e6:
         print(file.name, "   ",H_mean )
         count += 1
 
