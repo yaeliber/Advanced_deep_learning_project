@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def get_keypoints_and_descriptors(img1, img2):
-    print("--------- In get_keypoints_and_descriptors ---------")
+    print('--------- In get_keypoints_and_descriptors ---------')
     # use orb if sift is not installed
     feature_extractor = cv2.SIFT_create()
 
@@ -14,25 +14,25 @@ def get_keypoints_and_descriptors(img1, img2):
     kp1, desc1 = feature_extractor.detectAndCompute(img1, None)
     kp2, desc2 = feature_extractor.detectAndCompute(img2, None)
 
-    print("img1", img1.shape)
-    print("kp1", len(kp1))
-    print("kp2", len(kp2))
+    print('img1', img1.shape)
+    print('kp1', len(kp1))
+    print('kp2', len(kp2))
 
     keyOriginal = cv2.drawKeypoints(img1, kp1, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     keyRotated = cv2.drawKeypoints(img2, kp2, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     # fig = plt.figure(figsize=(10, 10))
     # fig.add_subplot(1, 2, 1)
-    # plt.title("keyOriginalPoints")
-    # plt.axis("off")
+    # plt.title('keyOriginalPoints')
+    # plt.axis('off')
     # plt.imshow(keyOriginal)
     #
     # fig.add_subplot(1, 2, 2)
-    # plt.title("keyRotatedPoints")
-    # plt.axis("off")
+    # plt.title('keyRotatedPoints')
+    # plt.axis('off')
     # plt.imshow(keyRotated)
     # plt.show()
-    print("\n\n")
+    print('\n\n')
 
     return kp1, desc1, kp2, desc2
 
@@ -67,7 +67,7 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
     kp2_arr = keyPointsToArray(kp2)
 
     if len(kp1_arr) < 4 or len(kp2_arr) < 4:
-        print("remove")
+        print('remove')
         cv2.imwrite('../../data/error_img/' + img_name, cv2.imread(path))
         os.remove(path)
         return
@@ -157,7 +157,7 @@ def getDifficultLevel(H):
     return H_mean, H_std
 
 
-# path = "./data/temp_photos"
+# path = './data/temp_photos'
 # resize_path = './data/resize_photos'
 # homography_path = './data/homography_photos/1'
 # params_path = './data/params/1'
