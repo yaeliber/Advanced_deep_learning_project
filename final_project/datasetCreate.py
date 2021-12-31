@@ -37,7 +37,7 @@ def get_keypoints_and_descriptors(img1, img2):
     return kp1, desc1, kp2, desc2
 
 
-def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path):
+def image_pre_processing(img_name, path, resize_Path, homography_path, params_path):
     img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (320, 240))
 
@@ -60,11 +60,10 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
 
     warped_image = cv2.warpPerspective(img, H, (320, 240))
 
-
     kp1, desc1, kp2, desc2 = get_keypoints_and_descriptors(img, warped_image)
 
-    kp1_arr = keyPointsToArray(kp1)
-    kp2_arr = keyPointsToArray(kp2)
+    kp1_arr = key_points_to_array(kp1)
+    kp2_arr = key_points_to_array(kp2)
 
     if len(kp1_arr) < 4 or len(kp2_arr) < 4:
         print('remove')
@@ -75,7 +74,7 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
     cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     cv2.imwrite(homography_path, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
 
-    M, I, J = splitKeyPoints(H, kp1, kp2)
+    M, I, J = split_key_points(H, kp1, kp2)
 
     keyOriginal = cv2.drawKeypoints(img, M[0][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
     keyRotated = cv2.drawKeypoints(warped_image, M[1][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
@@ -89,13 +88,13 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
     # plt.plot(M[1][0], M[1][1], 'ro')
     # plt.show()
 
-    mk1 = keyPointsToArray(M[0])
-    mk2 = keyPointsToArray(M[1])
+    mk1 = key_points_to_array(M[0])
+    mk2 = key_points_to_array(M[1])
     M = [mk1, mk2]
-    I = keyPointsToArray(I)
-    J = keyPointsToArray(J)
+    I = key_points_to_array(I)
+    J = key_points_to_array(J)
 
-    H_mean, H_std = getDifficultLevel(H)
+    H_mean, H_std = get_difficult_level(H)
 
     np.savez(params_path + '.npz', H=np.array(H), kp1=np.array(kp1_arr), desc1=np.array(desc1), kp2=np.array(kp2_arr),
              desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J), H_mean=H_mean, H_std=H_std)
@@ -103,15 +102,15 @@ def ImagePreProcessing(img_name, path, resize_Path, homography_path, params_path
     return warped_image
 
 
-def PicturesInFolder(folderPath, resize_path, homography_path, params_path):
+def pictures_in_folder(folderPath, resize_path, homography_path, params_path):
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
         print(file.name)
-        ImagePreProcessing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
-                           homography_path + '/' + file.name, params_path + '/' + file.name)
+        image_pre_processing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
+                             homography_path + '/' + file.name, params_path + '/' + file.name)
 
 
-def splitKeyPoints(H, kp1, kp2):
+def split_key_points(H, kp1, kp2):
     M, I, J = [[], []], [], []
     match_2 = []
 
@@ -138,7 +137,7 @@ def splitKeyPoints(H, kp1, kp2):
     return M, I, J
 
 
-def keyPointsToArray(kp):
+def key_points_to_array(kp):
     kp_arr = []
     for point in kp:
         temp = (point.pt, point.size, point.angle, point.response, point.octave,
@@ -147,7 +146,7 @@ def keyPointsToArray(kp):
     return kp_arr
 
 
-def getDifficultLevel(H):
+def get_difficult_level(H):
     # if the H is close to I we are in a simple case (the new image close to the original)
     # |H-I|.mean => 0
     # |H-I|.std => 1
@@ -168,8 +167,7 @@ path = '../../data/restart_img'
 resize_path = '../../data/resize_photos'
 homography_path = '../../data/homography_photos/1'
 params_path = '../../data/params/1'
-PicturesInFolder(path, resize_path, homography_path, params_path)
-
+pictures_in_folder(path, resize_path, homography_path, params_path)
 
 # homography_path = './data/homography_photos/2'
 # params_path = './data/params/2'

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 
 
-def ArrayToKeyPoints(arr):
+def array_to_key_points(arr):
     kp = []
     for k in arr:
         kp.append(cv2.KeyPoint(k[0][0], k[0][1], k[1], k[2], k[3], k[4], k[5]))
@@ -177,8 +177,8 @@ def make_match(path1, path2, path3, algorithm):
     # plt.show()
 
     # extract keyPoints from params we made on dataSetCreate
-    kp1 = ArrayToKeyPoints(data['kp1'])
-    kp2 = ArrayToKeyPoints(data['kp2'])
+    kp1 = array_to_key_points(data['kp1'])
+    kp2 = array_to_key_points(data['kp2'])
 
     print('kp1: ', len(kp1))
     print('kp2: ', len(kp2))
@@ -214,8 +214,8 @@ def make_match(path1, path2, path3, algorithm):
 def get_match_score(kp1, kp2, best_matches, M, I, J):
     print('--------- In get_match_score ---------')
     # extract keyPoints from params we made on dataSetCreate
-    m_source = ArrayToKeyPoints(M[0])
-    m_dest = ArrayToKeyPoints(M[1])
+    m_source = array_to_key_points(M[0])
+    m_dest = array_to_key_points(M[1])
 
     M = [m_source, m_dest]
 
@@ -235,7 +235,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
                     and M[1][i].pt[0] == M_[1][j][0] and M[1][i].pt[1] == M_[1][j][1]:
                 M_counter += 1
                 break
-    I = ArrayToKeyPoints(I)
+    I = array_to_key_points(I)
     print('len I  ', len(I))
     print('len I* ', len(I_))
     I_counter = 0
@@ -245,7 +245,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
                 I_counter += 1
                 break
 
-    J = ArrayToKeyPoints(J)
+    J = array_to_key_points(J)
     print('len J  ', len(J))
     print('len J* ', len(J_))
     J_counter = 0
@@ -272,12 +272,12 @@ def H_error(H_dest_to_src, path):
     error = H_src_to_dest.dot(H_dest_to_src) - np.eye(3)
     error = np.sum(np.abs(error))
 
-    H_mean, H_std = getDifficultLevel(H_src_to_dest)
+    H_mean, H_std = get_difficult_level(H_src_to_dest)
 
     return error, H_mean, H_std
 
 
-def getDifficultLevel(H):
+def get_difficult_level(H):
     I = np.eye(3)
     dif = np.abs(H - I)
     H_mean = np.mean(dif)
@@ -345,7 +345,6 @@ def main(folder_path, folder_number):
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
