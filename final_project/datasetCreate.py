@@ -37,6 +37,37 @@ def get_keypoints_and_descriptors(img1, img2):
     return kp1, desc1, kp2, desc2
 
 
+def get_kp_distance(kp_arr, ind1, ind2):
+    x1, y1 = kp_arr[ind1][0][0], kp_arr[ind1][0][1]
+    x2, y2 = kp_arr[ind2][0][0], kp_arr[ind2][0][1]
+
+    distance = np.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2))
+    return distance
+
+
+def delete_close_key_points(kp_arr, desc):
+    radius = 5
+    k1 = 0
+    length = len(kp_arr)
+    while k1 < length:
+
+        k2 = k1 + 1
+        while k2 < length:
+            # delete all the close key points and descriptors that are close to k1
+            if get_kp_distance(kp_arr, k1, k2) < radius:
+                kp_arr = np.delete(kp_arr, k2, axis=0)
+                desc = np.delete(desc, k2, axis=0)
+                k2 -= 1
+
+            length = len(kp_arr)
+            k2 += 1
+
+        length = len(kp_arr)
+        k1 += 1
+
+    return kp_arr, desc
+
+
 def image_pre_processing(img_name, path, resize_Path, homography_path, params_path):
     img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (320, 240))
@@ -64,6 +95,9 @@ def image_pre_processing(img_name, path, resize_Path, homography_path, params_pa
 
     kp1_arr = key_points_to_array(kp1)
     kp2_arr = key_points_to_array(kp2)
+
+    kp1_arr, desc1 = delete_close_key_points(kp1_arr, desc1)
+    kp2_arr, desc2 = delete_close_key_points(kp2_arr, desc2)
 
     if len(kp1_arr) < 4 or len(kp2_arr) < 4:
         print('remove')
