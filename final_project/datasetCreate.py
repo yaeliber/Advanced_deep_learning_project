@@ -46,7 +46,7 @@ def get_kp_distance(kp_arr, ind1, ind2):
 
 
 def delete_close_key_points(kp_arr, desc):
-    radius = 5
+    radius = 0.1
     k1 = 0
     length = len(kp_arr)
     while k1 < length:
