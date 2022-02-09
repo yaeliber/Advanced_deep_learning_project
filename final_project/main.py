@@ -62,8 +62,8 @@ def linear_assignment_match(desc1, desc2):
     return match
 
 
-def sinkhorn_match(desc1, desc2):
-    dustbin_percentage = 0.4
+def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
+    dustbin_percentage = dp_percentage
     len1 = len(desc1)
     len2 = len(desc2)
     cost_matrix = np.empty((len1 + 1, len2 + 1), dtype=float)
@@ -88,29 +88,17 @@ def sinkhorn_match(desc1, desc2):
     b = [(1 - dustbin_percentage) / len2] * (len2 + 1)
     b[len2] = dustbin_percentage
 
-    # print('a len: ', len(a))
-    # print('a sum: ', np.sum(a))  # should be 1
-    # print('\nb len: ', len(b))
-    # print('b sum: ', np.sum(b))  # should be 1
-
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-    # print(res)
-    print('res shape', res.shape)
 
     max_index_arr = np.argmax(res, axis=1)
-    # print('max_index_arr: ', max_index_arr)
-
-    # temp = np.take_along_axis(res, np.expand_dims(max_index_arr, axis=-1), axis=-1).squeeze(axis=-1)
-    # print('temp: ', temp)
 
     match = []
     for i in range(len1):
-        if max_index_arr[i] == len2:
+        if max_index_arr[i] == len2: # if matched to dustbin
             continue
         dist = np.linalg.norm(desc1[i] - desc2[max_index_arr[i]])
         match.append(cv2.DMatch(i, max_index_arr[i], dist))
 
-    print('best_matches_sinkhorn: ', len(match))
     return match
 
 
