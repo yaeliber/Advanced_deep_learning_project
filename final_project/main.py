@@ -106,7 +106,7 @@ def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=''):
     print('--------- In find_homography ---------')
     src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches]).reshape(-1, 1, 2)
-    H, mask = cv2.findHomography(dst_pts, src_pts, None, 5.0) #None to min squres
+    H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0) #None to min squres
     print('H: ', H)
     if H is None:
         return None, None, None
