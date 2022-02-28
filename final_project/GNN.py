@@ -12,11 +12,12 @@ def loss(data, DB_P, loss_range=1000):
 
     return loss_range - (match_score * loss_range)
 
+
 path = "../../data/params/delete_close_kp/paris_defense_000038.jpg.npz"
 data = np.load(path, allow_pickle=True)
 arr_loss = []
 for i in range(1, 5):
-    res_loss = loss(data, 0.2*i)
-    print("loss: ",res_loss, "DB: ", 0.2*i)
-    arr_loss.append((0.2*i,res_loss ))
+    res_loss = loss(data, 0.2 * i)
+    print("loss: ", res_loss, "DB: ", 0.2 * i)
+    arr_loss.append((0.2 * i, res_loss))
 print(arr_loss)
