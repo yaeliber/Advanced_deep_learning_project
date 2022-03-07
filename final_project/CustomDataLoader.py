@@ -28,8 +28,21 @@ class NpzDataLoader(Dataset):
 
         npz_file_name = os.path.join(self.root_dir, self.files_names.iloc[idx, 0])
         data = np.load(npz_file_name, allow_pickle=True)
+        data = dict(data)
+        data['name'] = self.files_names.iloc[idx, 0][:-4]
 
         if self.transform:
             data = self.transform(data)
 
         return data
+
+# csv_file = '../../data/params/files_name.csv'
+# root_dir = '../../data/params/1/'
+# img_dataset = NpzDataLoader(csv_file = csv_file, root_dir = root_dir)
+#
+# for i in range(len(img_dataset)):
+#     sample = img_dataset[i]
+#     print(i)
+#     print('name', sample['name'])
+#     # sample['H_std'], sample['desc2'])
+
