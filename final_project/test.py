@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import os
-
+import pandas as pd
 
 # np.save('./data', np.array([1, 2]))
 
@@ -33,6 +33,8 @@ import os
 #         count += 1
 #
 # print("count: ", count)
+import pandas as pd
+
 
 def array_to_key_points(arr):
     kp = []
@@ -152,10 +154,26 @@ def pictures_in_folder(folderPath, old_params_path, new_params_path):
                                  new_params_path + '/' + file.name)
 
 
+def create_pandas_file(folderPath, results_path):
+    files_name = []
+    assert (os.path.exists(folderPath))
+    for file in os.scandir(folderPath):
+        if (file.name != 'desktop.ini'):
+            files_name.append(file.name + '.npz')
+    df = pd.DataFrame(zip(files_name), columns=['name'])
+    df.to_csv(results_path, index=False)
+    print(len(files_name))
+
+
 path = '../../data/original_photos'
-old_params_path = '../../data/params/1'
-new_params_path = '../../data/params/delete_close_kp'
-pictures_in_folder(path, old_params_path, new_params_path)
+results_path = '../../data/params/files_name.csv'
+# create_pandas_file(path, results_path)
+df = pd.read_csv(results_path)
+print(df)
+print(df.iloc[0, 0])# second 0 for 'name'
+# old_params_path = '../../data/params/1'
+# new_params_path = '../../data/params/delete_close_kp'
+# pictures_in_folder(path, old_params_path, new_params_path)
 
 # img = cv2.cvtColor(cv2.imread('../../data/restart_img/paris_general_002907.jpg'), cv2.COLOR_BGR2RGB)# path after resize
 # data = np.load('../../data/params/1/paris_general_002907.jpg.npz', allow_pickle=True)# path npz
