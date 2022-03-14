@@ -1,9 +1,19 @@
+#!!!!!
+# pip install torch-scatter
+# pip install torch-sparse
+# !!!!!
+import torch.nn.functional as F
+from torch_geometric.data import Data
+from torch_geometric.nn import GATConv
+from torch_geometric.datasets import Planetoid
+import torch_geometric.transforms as T
+from itertools import combinations, product
+
 from main import *
+from CustomDataLoader import *
 
 
-def loss(data, DB_P, loss_range=1000):
-    match = sinkhorn_match(data['desc1'], data['desc2'], DB_P)
-
+def loss(match, data, loss_range=1000):
     # extract keyPoints from params we made on dataSetCreate
     kp1 = array_to_key_points(data['kp1'])
     kp2 = array_to_key_points(data['kp2'])
@@ -13,11 +23,51 @@ def loss(data, DB_P, loss_range=1000):
     return loss_range - (match_score * loss_range)
 
 
-path = "../../data/params/delete_close_kp/paris_defense_000038.jpg.npz"
-data = np.load(path, allow_pickle=True)
-arr_loss = []
-for i in range(1, 5):
-    res_loss = loss(data, 0.2 * i)
-    print("loss: ", res_loss, "DB: ", 0.2 * i)
-    arr_loss.append((0.2 * i, res_loss))
-print(arr_loss)
+class GAT(torch.nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(GAT, self).__init__()
+        self.hid = 8
+        self.in_head = 8
+        self.out_head = 1
+
+        self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
+        self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
+
+    # return edge indexes according to descriptors (inside and cross)
+    # return edges in shape [[sources], [destinations]]
+    def get_edge_index(self, desc1, desc2):
+        # !!!!!! if need (1,2) and (2,1) use permutations !!!!!!
+        len1 = len(desc1)
+        len2 = len(desc2)
+
+        list1 = list(range(len1))
+        list2 = list(range(len1, len1 + len2))
+
+        # All possible pairs inside each group
+        inside_temp = list(combinations(list1, 2)) + list(combinations(list2, 2))
+        inside_edge = [[], []]
+        for s, d in inside_temp:
+            inside_edge[0].append(s)
+            inside_edge[1].append(d)
+
+        # All possible pairs between groups
+        cross_edge = [list(np.sort(list1 * len2)), list(list2 * len1)]
+
+        return inside_edge, cross_edge
+
+    def forward(self, data):
+        iters = 4
+        desc1, desc2 = data['desc1'], data['desc2']
+        inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
+
+        x = desc1 + desc2
+        for i in range(iters):
+            # x = F.dropout(x, p=0.6, training=self.training) ?????
+            x = self.conv1(x, inside_edge)
+            x = F.elu(x)
+            x = self.conv2(x, cross_edge)
+
+        desc1 = x[0:len(desc1)]
+        desc2 = x[len(desc1):]
+        match = sinkhorn_match(desc1, desc2, dp_percentage=0.4)  # DB is parameter ???
+        return match
