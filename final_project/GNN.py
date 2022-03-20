@@ -36,7 +36,6 @@ class GAT(torch.nn.Module):
     # return edge indexes according to descriptors (inside and cross)
     # return edges in shape [[sources], [destinations]]
     def get_edge_index(self, desc1, desc2):
-        # !!!!!! if need (1,2) and (2,1) use permutations !!!!!!
         len1 = len(desc1)
         len2 = len(desc2)
 
@@ -50,8 +49,18 @@ class GAT(torch.nn.Module):
             inside_edge[0].append(s)
             inside_edge[1].append(d)
 
+        # duplicate inside_edge for direct graph
+        temp = inside_edge[0]
+        inside_edge[0] = inside_edge[0] + inside_edge[1]
+        inside_edge[1] = inside_edge[1] + temp
+
         # All possible pairs between groups
         cross_edge = [list(np.sort(list1 * len2)), list(list2 * len1)]
+
+        # duplicate cross_edge for direct graph
+        temp = cross_edge[0]
+        cross_edge[0] = cross_edge[0] + cross_edge[1]
+        cross_edge[1] = cross_edge[1] + temp
 
         return inside_edge, cross_edge
 
