@@ -24,9 +24,9 @@ def loss(match, data, loss_range=1000):
 
 
 class GAT(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels=128, out_channels=128):
         super(GAT, self).__init__()
-        self.hid = 8
+        self.hid = 1
         self.in_head = 8
         self.out_head = 1
 
@@ -62,10 +62,12 @@ class GAT(torch.nn.Module):
 
         x = desc1 + desc2
         for i in range(iters):
-            # x = F.dropout(x, p=0.6, training=self.training) ?????
             x = self.conv1(x, inside_edge)
             x = F.elu(x)
-            x = self.conv2(x, cross_edge)
+            x = self.conv1(x, cross_edge)
+            x = F.elu(x)
+
+        x = self.conv2(x, cross_edge)
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
