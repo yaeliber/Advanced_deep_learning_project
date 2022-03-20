@@ -1,8 +1,5 @@
-#!!!!!
-# pip install torch-scatter
-# pip install torch-sparse
-# !!!!!
 import torch.nn.functional as F
+from torch.autograd import Variable
 from torch_geometric.data import Data
 from torch_geometric.nn import GATConv
 from torch_geometric.datasets import Planetoid
@@ -26,6 +23,7 @@ def loss(match, data, loss_range=1000):
 class GAT(torch.nn.Module):
     def __init__(self, in_channels=128, out_channels=128):
         super(GAT, self).__init__()
+        self.DB_percentage = Variable(torch.tensor(0.4), requires_grad=True)
         self.hid = 1
         self.in_head = 8
         self.out_head = 1
@@ -80,5 +78,5 @@ class GAT(torch.nn.Module):
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
-        match = sinkhorn_match(desc1, desc2, dp_percentage=0.4)  # DB is parameter ???
+        match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
         return match
