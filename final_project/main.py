@@ -3,6 +3,7 @@ import cv2
 import random
 import numpy as np
 import ot as ot
+import torch
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
@@ -88,6 +89,9 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
     b = [(1 - dustbin_percentage) / len2] * (len2 + 1)
     b[len2] = dustbin_percentage
 
+    a = torch.Tensor(a)
+    b = torch.Tensor(b)
+    cost_matrix = torch.Tensor(cost_matrix)
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
 
     max_index_arr = np.argmax(res, axis=1)
@@ -96,8 +100,8 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
     for i in range(len1):
         if max_index_arr[i] == len2: # if matched to dustbin
             continue
-        dist = np.linalg.norm(desc1[i] - desc2[max_index_arr[i]])
-        match.append(cv2.DMatch(i, max_index_arr[i], dist))
+        dist = np.linalg.norm(desc1[i] - desc2[max_index_arr[i].item()])
+        match.append(cv2.DMatch(i, max_index_arr[i].item(), dist))
 
     return match
 
@@ -349,7 +353,7 @@ def main(folder_path, folder_number):
 
 if __name__ == '__main__':
     # folder_path = './data/resize_photos/'
-    folder_path = '../../data/resize_photos/'
+    folder_path = '../../data/test/'
     folder_number = 1
     main(folder_path, folder_number)
 
