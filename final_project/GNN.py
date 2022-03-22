@@ -1,4 +1,5 @@
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torch_geometric.data import Data
 from torch_geometric.nn import GATConv
@@ -80,3 +81,32 @@ class GAT(torch.nn.Module):
         desc2 = x[len(desc1):]
         match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
         return match
+
+
+   if __name__ == '__main__':
+       csv_path = '../../data/params/files_name.csv'
+       npz_folder_path = '../../data/params/' + 1
+       dl =  NpzDataLoader(csv_path, npz_folder_path)
+       dataset = DataLoader(dl, batch_size= 20, shuffle= False) #num_workers??
+
+       device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+       device = "cpu"
+
+       model = GAT().to(device)
+       data = dataset[0].to(device)
+
+       optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
+
+       model.train()
+       for epoch in range(1000):
+           model.train()
+           optimizer.zero_grad()
+           out = model(data)
+           loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+
+           if epoch % 200 == 0:
+               print(loss)
+
+           loss.backward()
+           optimizer.step()
+

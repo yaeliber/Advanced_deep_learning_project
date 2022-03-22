@@ -353,7 +353,7 @@ def main(folder_path, folder_number):
 
 if __name__ == '__main__':
     # folder_path = './data/resize_photos/'
-    folder_path = '../../data/test/'
+    folder_path = '../../data/resize_photos/'
     folder_number = 1
     main(folder_path, folder_number)
 
