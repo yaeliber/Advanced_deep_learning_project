@@ -83,30 +83,29 @@ class GAT(torch.nn.Module):
         return match
 
 
-   if __name__ == '__main__':
-       csv_path = '../../data/params/files_name.csv'
-       npz_folder_path = '../../data/params/' + 1
-       dl =  NpzDataLoader(csv_path, npz_folder_path)
-       dataset = DataLoader(dl, batch_size= 20, shuffle= False) #num_workers??
+if __name__ == '__main__':
+    csv_path = '../../data/params/files_name.csv'
+    npz_folder_path = '../../data/params/' + 1
+    dl = NpzDataLoader(csv_path, npz_folder_path)
+    dataset = DataLoader(dl, batch_size=20, shuffle=False)  # num_workers??
 
-       device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-       device = "cpu"
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = "cpu"
 
-       model = GAT().to(device)
-       data = dataset[0].to(device)
+    model = GAT().to(device)
+    data = dataset[0].to(device)
 
-       optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 
-       model.train()
-       for epoch in range(1000):
-           model.train()
-           optimizer.zero_grad()
-           out = model(data)
-           loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+    model.train()
+    for epoch in range(1000):
+        model.train()
+        optimizer.zero_grad()
+        out = model(data)
+        loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
 
-           if epoch % 200 == 0:
-               print(loss)
+        if epoch % 200 == 0:
+            print(loss)
 
-           loss.backward()
-           optimizer.step()
-
+        loss.backward()
+        optimizer.step()
