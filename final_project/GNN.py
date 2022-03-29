@@ -83,17 +83,31 @@ class GAT(torch.nn.Module):
         return match
 
 
+def train(model, optimizer, loader):
+    model.train()
+
+    total_loss = 0
+    for data in loader:
+        optimizer.zero_grad()  # Clear gradients.
+        match = model(data)  # Forward pass.
+        loss = loss(match, data)  # Loss computation.
+        loss.backward()  # Backward pass.
+        optimizer.step()  # Update model parameters.
+        total_loss += loss.item() * data.num_graphs
+
+    return total_loss / len(loader.dataset)
+
 if __name__ == '__main__':
     csv_path = '../../data/params/files_name.csv'
     npz_folder_path = '../../data/params/' + 1
     dl = NpzDataLoader(csv_path, npz_folder_path)
-    dataset = DataLoader(dl, batch_size=20, shuffle=False)  # num_workers??
+    train_loader = DataLoader(dl, batch_size=20, shuffle=False)  # num_workers??
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = "cpu"
 
     model = GAT().to(device)
-    data = dataset[0].to(device)
+    data = train_loader[0].to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 
