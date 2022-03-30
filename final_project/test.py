@@ -164,13 +164,33 @@ def create_pandas_file(folderPath, results_path):
     df.to_csv(results_path, index=False)
     print(len(files_name))
 
+def create_train_test_pandas_file(folderPath, Percent_train, results_train_path, results_test_path):
+    files_name = []
+    assert (os.path.exists(folderPath))
+    for file in os.scandir(folderPath):
+        if (file.name != 'desktop.ini'):
+            files_name.append(file.name + '.npz')
+    train = int(Percent_train * len(files_name))
+    test = len(files_name) - train
+    df_train = pd.DataFrame(zip(files_name[:train]), columns=['name'])
+    df_test = pd.DataFrame(zip(files_name[train:]), columns=['name'])
+
+    df_train.to_csv(results_train_path, index=False)
+    df_test.to_csv(results_test_path, index=False)
+    print(len(files_name))
+    print('len train: ', len(files_name[:train]))
+    print('len test: ', len(files_name[train:]))
+
 
 path = '../../data/original_photos'
 results_path = '../../data/params/files_name.csv'
+results_train_path = '../../data/params/files_train_name.csv'
+results_test_path = '../../data/params/files_test_name.csv'
 # create_pandas_file(path, results_path)
+create_train_test_pandas_file(path, 0.7, results_train_path, results_test_path)
 df = pd.read_csv(results_path)
-print(df)
-print(df.iloc[0, 0])# second 0 for 'name'
+# print(df)
+# print(df.iloc[0, 0])# second 0 for 'name'
 # old_params_path = '../../data/params/1'
 # new_params_path = '../../data/params/delete_close_kp'
 # pictures_in_folder(path, old_params_path, new_params_path)
