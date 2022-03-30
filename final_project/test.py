@@ -155,6 +155,7 @@ def pictures_in_folder(folderPath, old_params_path, new_params_path):
 
 
 def create_pandas_file(folderPath, results_path):
+    # The function creates a CSV file with the npz file names
     files_name = []
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
@@ -165,6 +166,7 @@ def create_pandas_file(folderPath, results_path):
     print(len(files_name))
 
 def create_train_test_pandas_file(folderPath, Percent_train, results_train_path, results_test_path):
+    # The function creates CSV files with the names of the npz files divided into train and test
     files_name = []
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
@@ -187,8 +189,9 @@ results_path = '../../data/params/files_name.csv'
 results_train_path = '../../data/params/files_train_name.csv'
 results_test_path = '../../data/params/files_test_name.csv'
 # create_pandas_file(path, results_path)
+# df = pd.read_csv(results_path)
 create_train_test_pandas_file(path, 0.7, results_train_path, results_test_path)
-df = pd.read_csv(results_path)
+# df = pd.read_csv(results_train_path)
 # print(df)
 # print(df.iloc[0, 0])# second 0 for 'name'
 # old_params_path = '../../data/params/1'
