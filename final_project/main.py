@@ -73,7 +73,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
         for j in range(len2):
-            cost_matrix[i][j] = np.linalg.norm(desc1[i] - desc2[j])  # L2
+            cost_matrix[i][j] = np.linalg.norm(desc1.detach().numpy()[i] - desc2.detach().numpy()[j])  # L2
 
     # fill the dustbin rows and cols to 0
     for i in range(len1 + 1):
@@ -100,7 +100,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
     for i in range(len1):
         if max_index_arr[i] == len2: # if matched to dustbin
             continue
-        dist = np.linalg.norm(desc1[i] - desc2[max_index_arr[i].item()])
+        dist = np.linalg.norm(desc1[i].item() - desc2[max_index_arr[i]].item())
         match.append(cv2.DMatch(i, max_index_arr[i].item(), dist))
 
     return match
@@ -353,7 +353,7 @@ def main(folder_path, folder_number):
 
 if __name__ == '__main__':
     # folder_path = './data/resize_photos/'
-    folder_path = '../../data/resize_photos/'
+    folder_path = '../../data/test/'
     folder_number = 1
     main(folder_path, folder_number)
 

@@ -88,9 +88,14 @@ class GAT(torch.nn.Module):
             x = F.elu(x)
 
         x = self.conv2(x, cross_edge)
+        print('x shape: ', x.shape)
 
+        print('before desc1 shape: ', desc1.shape)
+        print('before desc2 shape: ', desc2.shape)
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
+        print('desc1 shape: ', desc1.shape)
+        print('desc2 shape: ', desc2.shape)
         match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
         return match
 
@@ -124,10 +129,10 @@ def test(model, loader):
 
 
 if __name__ == '__main__':
-    train_csv_path = '../../data/params/train_files_name.csv'
-    test_csv_path = '../../data/params/test_files_name.csv'
+    train_csv_path = '../../data/params/files_train_name.csv'
+    test_csv_path = '../../data/params/files_test_name.csv'
     npz_folder_path = '../../data/params/' + '1'
-    train_dataset = NpzDataLoader('../../data/params/files_name.csv', npz_folder_path)
+    train_dataset = NpzDataLoader(train_csv_path, npz_folder_path)
     # test_dataset = NpzDataLoader(test_csv_path, npz_folder_path)
 
     train_loader = DataLoader(train_dataset, batch_size=20, shuffle=False)  # num_workers??
