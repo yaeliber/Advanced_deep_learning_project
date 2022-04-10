@@ -11,12 +11,13 @@ from itertools import combinations, product
 
 from main import *
 from CustomDataLoader import *
+from tensor_utils import *
 
 
 def loss_function(match, data, loss_range=1000):
     # extract keyPoints from params we made on dataSetCreate
-    kp1 = array_to_key_points(data['kp1'])
-    kp2 = array_to_key_points(data['kp2'])
+    kp1 = data['kp1']
+    kp2 = data['kp2']
 
     match_score = get_match_score(kp1, kp2, match, data['M'], data['I'], data['J'])
 
@@ -105,6 +106,7 @@ def train(model, optimizer, loader):
 
     total_loss = 0
     for data in loader.dataset:
+        print("data 109: ", data)
         optimizer.zero_grad()  # Clear gradients.
         match = model(data)  # Forward pass.
         loss = loss_function(match, data)  # Loss computation.
