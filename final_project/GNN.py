@@ -11,7 +11,7 @@ from itertools import combinations, product
 
 from main import *
 from CustomDataLoader import *
-from tensor_utils import *
+from tensorUtils import *
 
 
 def loss_function(match, data, loss_range=1000):
@@ -19,10 +19,11 @@ def loss_function(match, data, loss_range=1000):
     kp1 = data['kp1']
     kp2 = data['kp2']
 
-    match_score = get_match_score(kp1, kp2, match, data['M'], data['I'], data['J'])
-
-    return loss_range - (match_score * loss_range)
-
+    match_score = get_match_score_tensor(kp1, kp2, match, data['M'], data['I'], data['J'])
+    match_score = torch.tensor((loss_range - (match_score * loss_range)), requires_grad=True)
+    # return loss_range - (match_score * loss_range)
+    print("match_score", match_score)
+    return match_score
 
 class GAT(torch.nn.Module):
     def __init__(self, in_channels=128, out_channels=128):
@@ -79,16 +80,16 @@ class GAT(torch.nn.Module):
         print('inside_edge ', type(inside_edge))
 
         x = torch.Tensor(np.concatenate((desc1, desc2)))
-        for i in range(iters):
-            print('x shape: ', x.shape)
-            x = self.conv1(x, inside_edge)
-            print('x shape: ', x.shape)
-            x = F.elu(x)
-            print('x shape: ', x.shape)
-            x = self.conv1(x, cross_edge)
-            x = F.elu(x)
-
-        x = self.conv2(x, cross_edge)
+        # for i in range(iters):
+        #     print('x shape: ', x.shape)
+        #     x = self.conv1(x, inside_edge)
+        #     print('x shape: ', x.shape)
+        #     x = F.elu(x)
+        #     print('x shape: ', x.shape)
+        #     x = self.conv1(x, cross_edge)
+        #     x = F.elu(x)
+        #
+        # x = self.conv2(x, cross_edge)
         print('x shape: ', x.shape)
 
         print('before desc1 shape: ', desc1.shape)
@@ -106,13 +107,12 @@ def train(model, optimizer, loader):
 
     total_loss = 0
     for data in loader.dataset:
-        print("data 109: ", data)
         optimizer.zero_grad()  # Clear gradients.
         match = model(data)  # Forward pass.
         loss = loss_function(match, data)  # Loss computation.
         loss.backward()  # Backward pass.
         optimizer.step()  # Update model parameters.
-        total_loss += loss.item() * data.num_graphs
+        total_loss += loss.item()
 
     return total_loss / len(loader.dataset)
 

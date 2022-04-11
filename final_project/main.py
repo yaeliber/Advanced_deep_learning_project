@@ -4,6 +4,7 @@ import random
 import numpy as np
 import ot as ot
 import torch
+import tensorflow as tf
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
@@ -67,13 +68,13 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
     dustbin_percentage = dp_percentage
     len1 = len(desc1)
     len2 = len(desc2)
-    cost_matrix = np.empty((len1 + 1, len2 + 1), dtype=float)
+    cost_matrix = torch.empty((len1 + 1, len2 + 1), dtype=float)
     print(cost_matrix.shape)
 
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
         for j in range(len2):
-            cost_matrix[i][j] = np.linalg.norm(desc1.detach().numpy()[i] - desc2.detach().numpy()[j])  # L2
+            cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
 
     # fill the dustbin rows and cols to 0
     for i in range(len1 + 1):
@@ -91,17 +92,16 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
 
     a = torch.Tensor(a)
     b = torch.Tensor(b)
-    cost_matrix = torch.Tensor(cost_matrix)
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-
-    max_index_arr = np.argmax(res, axis=1)
+    print("line 96 res", res)
+    max_index_arr = torch.argmax(res, axis=1)
 
     match = []
     for i in range(len1):
         if max_index_arr[i] == len2: # if matched to dustbin
             continue
-        dist = np.linalg.norm(desc1[i].item() - desc2[max_index_arr[i]].item())
-        match.append(cv2.DMatch(i, max_index_arr[i].item(), dist))
+        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+        match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
     return match
 
