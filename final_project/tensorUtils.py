@@ -37,6 +37,10 @@ def get_match_score_tensor(kp1, kp2, best_matches, M, I, J):
     print('--------- In get_match_score ---------')
     # extract keyPoints from params we made on dataSetCreate
 
+    if len(best_matches) == 0:
+        print("no matches")
+        return 0
+
     src_pts, dst_pts = Dmatch_to_src_dst_tensors(kp1, kp2, best_matches)
 
     M_ = torch.stack(([src_pts, dst_pts]))

@@ -14,7 +14,7 @@ from CustomDataLoader import *
 from tensorUtils import *
 
 
-def loss_function(match, data, loss_range=1000):
+def loss_function(match, data, loss_range=1000.0):
     # extract keyPoints from params we made on dataSetCreate
     kp1 = data['kp1']
     kp2 = data['kp2']
@@ -33,7 +33,6 @@ class GAT(torch.nn.Module):
         self.in_head = 128
         self.out_head = 1
 
-        self.conv0 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
 
@@ -81,24 +80,16 @@ class GAT(torch.nn.Module):
         print('inside_edge ', type(inside_edge))
 
         x = torch.Tensor(np.concatenate((desc1, desc2)))
-        # for i in range(iters):
-        #     print('x shape: ', x.shape)
-        #     x = self.conv0(x, inside_edge)
-        #     print('x shape: ', x.shape)
-        #     x = F.elu(x)
-        #     print('x shape: ', x.shape)
-        #     x = self.conv1(x, cross_edge)
-        #     x = F.elu(x)
-        #
-        # x = self.conv2(x, cross_edge)
-        print('x shape: ', x.shape)
+        for i in range(iters):
+            print('x shape: ', x.shape)
+            x = self.conv1(x, inside_edge)
+            print('x shape: ', x.shape)
+            x = F.elu(x)
 
-        print('before desc1 shape: ', desc1.shape)
-        print('before desc2 shape: ', desc2.shape)
+        x = self.conv2(x, cross_edge)
+
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
-        print('desc1 shape: ', desc1.shape)
-        print('desc2 shape: ', desc2.shape)
         match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
         return match
 
@@ -109,7 +100,15 @@ def train(model, optimizer, loader):
     total_loss = 0
     for data in loader.dataset:
         optimizer.zero_grad()  # Clear gradients.
+        # print("params before: ")
+        # for param in model.parameters():
+        #     print("params: ", param, param.grad)
+
         match = model(data)  # Forward pass.
+        # print("params after: ")
+        # for param in model.parameters():
+        #     print("params: ", param, param.grad)
+
         loss = loss_function(match, data)  # Loss computation.
         loss.backward()  # Backward pass.
         optimizer.step()  # Update model parameters.
