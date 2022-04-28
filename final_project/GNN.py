@@ -33,6 +33,7 @@ class GAT(torch.nn.Module):
         self.in_head = 128
         self.out_head = 1
 
+        self.conv0 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
 
@@ -82,7 +83,7 @@ class GAT(torch.nn.Module):
         x = torch.Tensor(np.concatenate((desc1, desc2)))
         # for i in range(iters):
         #     print('x shape: ', x.shape)
-        #     x = self.conv1(x, inside_edge)
+        #     x = self.conv0(x, inside_edge)
         #     print('x shape: ', x.shape)
         #     x = F.elu(x)
         #     print('x shape: ', x.shape)
