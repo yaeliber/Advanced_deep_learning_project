@@ -57,9 +57,6 @@ class GAT(torch.nn.Module):
         inside_edge[0] = inside_edge[0] + inside_edge[1]
         inside_edge[1] = inside_edge[1] + temp
 
-        # inside_edge[0] = torch.LongTensor(inside_edge[0])
-        # inside_edge[1] = torch.LongTensor(inside_edge[1])
-
         # All possible pairs between groups
         cross_edge = [list(np.sort(list1 * len2)), list(list2 * len1)]
 
@@ -67,9 +64,6 @@ class GAT(torch.nn.Module):
         temp = cross_edge[0]
         cross_edge[0] = cross_edge[0] + cross_edge[1]
         cross_edge[1] = cross_edge[1] + temp
-
-        # cross_edge[0] = torch.LongTensor(cross_edge[0])
-        # cross_edge[1] = torch.LongTensor(cross_edge[1])
 
         return torch.LongTensor(inside_edge),  torch.LongTensor(cross_edge)
 

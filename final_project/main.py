@@ -1,6 +1,5 @@
 import os
 import cv2
-import random
 import numpy as np
 import ot as ot
 import torch
@@ -10,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 
 
+# return: list of keypoints objects
 def array_to_key_points(arr):
     kp = []
     for k in arr:
@@ -64,7 +64,7 @@ def linear_assignment_match(desc1, desc2):
     return match
 
 
-def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
+def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     dustbin_percentage = dp_percentage
     len1 = len(desc1)
     len2 = len(desc2)
@@ -98,7 +98,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage = 0.4):
 
     match = []
     for i in range(len1):
-        if max_index_arr[i] == len2: # if matched to dustbin
+        if max_index_arr[i] == len2:  # if matched to dustbin
             continue
         dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
         match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
@@ -110,7 +110,7 @@ def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=''):
     print('--------- In find_homography ---------')
     src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches]).reshape(-1, 1, 2)
-    H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0) #None to min squres
+    H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)  # None to min squres
     print('H: ', H)
     if H is None:
         return None, None, None
@@ -218,9 +218,10 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
     I_ = [item for item in kp1 if item.pt not in src_pts]
     J_ = [item for item in kp2 if item.pt not in dst_pts]
 
-    M_counter = 0
     print('len M  ', len(M[0]))
     print('len M* ', len(M_[0]))
+    M_counter = 0
+    # M_counter is counting intersection between M and M_ (M_ = M*)
     for j in range(len(M_[0])):
         for i in range(len(M[0])):
             if M[0][i].pt[0] == M_[0][j][0] and M[0][i].pt[1] == M_[0][j][1] \
@@ -231,6 +232,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
     print('len I  ', len(I))
     print('len I* ', len(I_))
     I_counter = 0
+    # I_counter is counting intersection between I and I_ (I_ = I*)
     for kp_1 in I_:
         for kp_2 in I:
             if kp_1.pt[0] == kp_2.pt[0] and kp_1.pt[1] == kp_2.pt[1]:
@@ -241,6 +243,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
     print('len J  ', len(J))
     print('len J* ', len(J_))
     J_counter = 0
+    # J_counter is counting intersection between J and J_ (J_ = J*)
     for kp_1 in J_:
         for kp_2 in J:
             if kp_1.pt[0] == kp_2.pt[0] and kp_1.pt[1] == kp_2.pt[1]:

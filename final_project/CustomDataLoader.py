@@ -1,5 +1,4 @@
 import os
-import torch
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
@@ -25,6 +24,7 @@ class NpzDataLoader(Dataset):
     def __len__(self):
         return len(self.files_names)
 
+    # return dictionary of all parameters
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -39,9 +39,8 @@ class NpzDataLoader(Dataset):
         for item in ['H', 'desc1', 'desc2']:
             data[item] = tf.convert_to_tensor(data[item])
 
-
         temp_M = [[], []]
-        for i in [0,1]:
+        for i in [0, 1]:
             temp_M[i] = array_to_tensor_of_key_points(data['M'][i])
         data['M'] = torch.stack((temp_M))
 
@@ -51,14 +50,3 @@ class NpzDataLoader(Dataset):
             data = self.transform(data)
 
         return data
-
-# csv_file = '../../data/params/files_name.csv'
-# root_dir = '../../data/params/1/'
-# img_dataset = NpzDataLoader(csv_file = csv_file, root_dir = root_dir)
-#
-# for i in range(len(img_dataset)):
-#     sample = img_dataset[i]
-#     print(i)
-#     print('name', sample['name'])
-#     # sample['H_std'], sample['desc2'])
-

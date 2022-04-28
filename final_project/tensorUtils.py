@@ -1,5 +1,3 @@
-import numpy as np
-import cv2
 import torch
 
 
@@ -18,7 +16,7 @@ def array_to_tensor_of_key_points(arr):
 def Dmatch_to_src_dst_tensors(kp1, kp2, matches):
     src = []
     dst = []
-    print("line 16 matches", matches)
+    print("line 21 matches", matches)
     for m in matches:
         src.append(torch.Tensor([kp1[m.queryIdx][0], kp1[m.queryIdx][1]]))
         dst.append(torch.Tensor([kp2[m.trainIdx][0], kp2[m.trainIdx][1]]))
