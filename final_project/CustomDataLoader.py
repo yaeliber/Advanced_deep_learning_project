@@ -1,4 +1,5 @@
 import os
+import torch
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
@@ -37,7 +38,7 @@ class NpzDataLoader(Dataset):
             data[item] = array_to_tensor_of_key_points(data[item])
 
         for item in ['H', 'desc1', 'desc2']:
-            data[item] = tf.convert_to_tensor(data[item])
+            data[item] = torch.as_tensor(data[item])
 
         temp_M = [[], []]
         for i in [0, 1]:
