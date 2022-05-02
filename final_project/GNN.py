@@ -70,19 +70,19 @@ class GAT(torch.nn.Module):
     def forward(self, data):
         iters = 2
         desc1, desc2 = data['desc1'], data['desc2']
-        desc1 = F.normalize(desc1, dim = 0)
-        desc2 = F.normalize(desc2, dim = 0)
+        # desc1 = F.normalize(desc1, dim = 0)
+        # desc2 = F.normalize(desc2, dim = 0)
 
         inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
 
         x = torch.Tensor(np.concatenate((desc1, desc2)))
-        for i in range(iters):
-            print('x shape: ', x.shape)
-            x = self.conv1(x, inside_edge)
-            print('x shape: ', x.shape)
-            x = F.elu(x)
-
-        x = self.conv2(x, cross_edge)
+        # for i in range(iters):
+        #     print('x shape: ', x.shape)
+        #     x = self.conv1(x, inside_edge)
+        #     print('x shape: ', x.shape)
+        #     x = F.elu(x)
+        #
+        # x = self.conv2(x, cross_edge)
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]

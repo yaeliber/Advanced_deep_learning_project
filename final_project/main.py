@@ -8,6 +8,8 @@ from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 
+from imp_sinkhorn import *
+
 
 # return: list of keypoints objects
 def array_to_key_points(arr):
@@ -75,7 +77,8 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
         for j in range(len2):
-            cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+            cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
+            # cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
 
     # fill the dustbin rows and cols to 0
     for i in range(len1 + 1):
@@ -94,7 +97,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     a = torch.Tensor(a)
     b = torch.Tensor(b)
     # res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-    res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
+    res = sinkhorn1(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     print("line 96 res", res)
     max_index_arr = torch.argmax(res, axis=1)
 
@@ -178,7 +181,7 @@ def make_match(path1, path2, path3, algorithm):
     print('kp2: ', len(kp2))
 
     desc1, desc2 = data['desc1'], data['desc2']
-    
+
     if algorithm == 'knn_match':  # all knn matches without
         best_matches = knn_match(desc1, desc2, False)
     if algorithm == 'knn_match_v2':
