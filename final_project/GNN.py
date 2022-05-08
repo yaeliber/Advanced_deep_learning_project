@@ -76,13 +76,13 @@ class GAT(torch.nn.Module):
         inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
 
         x = torch.Tensor(np.concatenate((desc1, desc2)))
-        # for i in range(iters):
-        #     print('x shape: ', x.shape)
-        #     x = self.conv1(x, inside_edge)
-        #     print('x shape: ', x.shape)
-        #     x = F.elu(x)
-        #
-        # x = self.conv2(x, cross_edge)
+        for i in range(iters):
+            print('x shape: ', x.shape)
+            x = self.conv1(x, inside_edge)
+            print('x shape: ', x.shape)
+            x = F.elu(x)
+
+        x = self.conv2(x, cross_edge)
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
@@ -96,18 +96,21 @@ def train(model, optimizer, loader):
     total_loss = 0
     for data in loader.dataset:
         optimizer.zero_grad()  # Clear gradients.
-        # print("params before: ")
-        # for param in model.parameters():
-        #     print("params: ", param, param.grad)
 
         match = model(data)  # Forward pass.
-        # print("params after: ")
-        # for param in model.parameters():
-        #     print("params: ", param, param.grad)
 
         loss = loss_function(match, data)  # Loss computation.
+        print("params before: ")
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(name, param.grad.data)
+
         loss.backward()  # Backward pass.
         optimizer.step()  # Update model parameters.
+        print("params after: ")
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(name, param.grad.data)
         total_loss += loss.item()
 
     return total_loss / len(loader.dataset)

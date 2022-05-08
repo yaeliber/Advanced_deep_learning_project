@@ -77,8 +77,8 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
         for j in range(len2):
-            cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
-            # cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+            # cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
+            cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
 
     # fill the dustbin rows and cols to 0
     for i in range(len1 + 1):
