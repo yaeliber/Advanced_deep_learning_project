@@ -201,18 +201,18 @@ def get_difficult_level(H):
     return H_mean, H_std
 
 
-# path = './data/temp_photos'
-# resize_path = './data/resize_photos'
-# homography_path = './data/homography_photos/1'
-# params_path = './data/params/1'
-# PicturesInFolder(path, resize_path, homography_path, params_path)
-
-path = '../../data/restart_img'
-resize_path = '../../data/resize_photos'
-homography_path = '../../data/homography_photos/1'
-params_path = '../../data/params/1'
+path = './data/original_photos'
+resize_path = './data/resize_photos'
+homography_path = './data/homography_photos/1'
+params_path = './data/params/1'
 pictures_in_folder(path, resize_path, homography_path, params_path)
+
+# path = '../../data/restart_img'
+# resize_path = '../../data/resize_photos'
+# homography_path = '../../data/homography_photos/1'
+# params_path = '../../data/params/1'
+# pictures_in_folder(path, resize_path, homography_path, params_path)
 
 # homography_path = './data/homography_photos/2'
 # params_path = './data/params/2'
-# PicturesInFolder(path, resize_path, homography_path, params_path)
+# pictures_in_folder(path, resize_path, homography_path, params_path)
