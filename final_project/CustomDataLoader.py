@@ -37,8 +37,13 @@ class NpzDataLoader(Dataset):
         for item in ['kp1', 'kp2', 'I', 'J']:
             data[item] = array_to_tensor_of_key_points(data[item])
 
-        for item in ['H', 'desc1', 'desc2']:
+        for item in ['H', 'desc1', 'desc2', 'I_ind', 'J_ind']:
             data[item] = torch.as_tensor(data[item])
+
+        temp_M_ind = [[], []]
+        for i in [0, 1]:
+            temp_M_ind[i] = torch.as_tensor(data['M_ind'][i])
+        data['M_ind'] = torch.stack((temp_M_ind))
 
         temp_M = [[], []]
         for i in [0, 1]:

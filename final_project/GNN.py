@@ -15,13 +15,10 @@ from tensorUtils import *
 
 
 def loss_implement(p_match, data):
-    M = data['M']
-    I = data['I']
-    J = data['J']
+    M = data['M_ind']
+    I = data['I_ind']
+    J = data['J_ind']
     loss = 0
-    print("M", M.shape)
-    print("M[0]", M[0])
-    print("M[1]", M[1])
     loss -= torch.sum(torch.log(p_match[M[0].long(), M[1].long()])) # sum(i∈M[0] and j∈M[1] -log P[i,j])
     loss -= torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()])) # sum(i∈I -log P[i,N+1])
     loss -= torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])) # sum(j∈J -log P[M+1,j])
