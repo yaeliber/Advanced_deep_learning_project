@@ -108,7 +108,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
         dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
         match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
-    return match
+    return res, match
 
 
 def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=''):

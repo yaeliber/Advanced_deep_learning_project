@@ -14,6 +14,21 @@ from CustomDataLoader import *
 from tensorUtils import *
 
 
+def loss_implement(p_match, data):
+    M = data['M']
+    I = data['I']
+    J = data['J']
+    loss = 0
+    print("M", M.shape)
+    print("M[0]", M[0])
+    print("M[1]", M[1])
+    loss -= torch.sum(torch.log(p_match[M[0].long(), M[1].long()])) # sum(i∈M[0] and j∈M[1] -log P[i,j])
+    loss -= torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()])) # sum(i∈I -log P[i,N+1])
+    loss -= torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])) # sum(j∈J -log P[M+1,j])
+
+    return torch.tensor(loss)
+
+
 def loss_function(match, data, loss_range=1000.0):
     # extract keyPoints from params we made on dataSetCreate
     kp1 = data['kp1']
@@ -86,8 +101,8 @@ class GAT(torch.nn.Module):
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
-        match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
-        return match
+        p_match, match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
+        return p_match, match
 
 
 def train(model, optimizer, loader):
@@ -97,9 +112,9 @@ def train(model, optimizer, loader):
     for data in loader.dataset:
         optimizer.zero_grad()  # Clear gradients.
 
-        match = model(data)  # Forward pass.
+        p_match, match = model(data)  # Forward pass.
 
-        loss = loss_function(match, data)  # Loss computation.
+        loss = loss_implement(p_match, data)  # Loss computation.
         print("params before: ")
         for name, param in model.named_parameters():
             if param.requires_grad:
