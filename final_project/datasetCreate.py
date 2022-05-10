@@ -108,7 +108,7 @@ def image_pre_processing(img_name, path, resize_Path, homography_path, params_pa
     cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     cv2.imwrite(homography_path, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
 
-    M, I, J = split_key_points(H, kp1, kp2)
+    M, I, J, M_ind, I_ind, J_ind = split_key_points(H, kp1, kp2)
 
     keyOriginal = cv2.drawKeypoints(img, M[0][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
     keyRotated = cv2.drawKeypoints(warped_image, M[1][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
@@ -131,7 +131,8 @@ def image_pre_processing(img_name, path, resize_Path, homography_path, params_pa
     H_mean, H_std = get_difficult_level(H)
 
     np.savez(params_path + '.npz', H=np.array(H), kp1=np.array(kp1_arr), desc1=np.array(desc1), kp2=np.array(kp2_arr),
-             desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J), H_mean=H_mean, H_std=H_std)
+             desc2=np.array(desc2), M=np.array(M), I=np.array(I), J=np.array(J),
+             M_ind=np.array(M_ind), I_ind=np.array(I_ind), J_ind=np.array(J_ind), H_mean=H_mean, H_std=H_std)
 
     return warped_image
 
@@ -146,13 +147,14 @@ def pictures_in_folder(folderPath, resize_path, homography_path, params_path):
 
 def split_key_points(H, kp1, kp2):
     M, I, J = [[], []], [], []
+    M_ind, I_ind, J_ind = [[], []], [], []
     match_2 = []
 
-    for k1 in kp1:
+    for ind1, k1 in enumerate(kp1):
         kv1 = cv2.perspectiveTransform(np.float32(k1.pt).reshape(-1, 1, 2), H)
         match = False
 
-        for k2 in kp2:
+        for ind2, k2 in enumerate(kp2):
             # vector of (x,y,1)
             kv2 = np.array([k2.pt[0], k2.pt[1]])
             dist = np.linalg.norm(kv1 - kv2)  # L2
@@ -163,12 +165,20 @@ def split_key_points(H, kp1, kp2):
                 match_2.append(k2)
                 M[0].append(k1)
                 M[1].append(k2)
+                M_ind[0].append(ind1)
+                M_ind[1].append(ind2)
+
         # k1 not match to any point in kp2
         if not match:
             I.append(k1)
+            I_ind.append(ind1)
 
-    J = [item for item in kp2 if item not in match_2]
-    return M, I, J
+    for ind, item in enumerate(kp2):
+        if item not in match_2:
+            J.append(item)
+            J_ind.append(ind)
+    # J = [item for item in kp2 if item not in match_2]
+    return M, I, J, M_ind, I_ind, J_ind
 
 
 def key_points_to_array(kp):
