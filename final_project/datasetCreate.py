@@ -108,6 +108,8 @@ def image_pre_processing(img_name, path, resize_Path, homography_path, params_pa
     cv2.imwrite(resize_Path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     cv2.imwrite(homography_path, cv2.cvtColor(warped_image, cv2.COLOR_RGB2BGR))
 
+    kp1 = array_to_key_points(kp1_arr)
+    kp2 = array_to_key_points(kp2_arr)
     M, I, J, M_ind, I_ind, J_ind = split_key_points(H, kp1, kp2)
 
     keyOriginal = cv2.drawKeypoints(img, M[0][0:7], None, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
@@ -141,7 +143,8 @@ def pictures_in_folder(folderPath, resize_path, homography_path, params_path):
     assert (os.path.exists(folderPath))
     for file in os.scandir(folderPath):
         print(file.name)
-        image_pre_processing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
+        if(file.name != 'desktop.ini'):
+            image_pre_processing(file.name, folderPath + '/' + file.name, resize_path + '/' + file.name,
                              homography_path + '/' + file.name, params_path + '/' + file.name)
 
 
@@ -189,6 +192,11 @@ def key_points_to_array(kp):
         kp_arr.append(temp)
     return kp_arr
 
+def array_to_key_points(arr):
+    kp = []
+    for k in arr:
+        kp.append(cv2.KeyPoint(k[0][0], k[0][1], k[1], k[2], k[3], k[4], k[5]))
+    return kp
 
 def get_difficult_level(H):
     # if the H is close to I we are in a simple case (the new image close to the original)
@@ -201,10 +209,10 @@ def get_difficult_level(H):
     return H_mean, H_std
 
 
-path = './data/original_photos'
-resize_path = './data/resize_photos'
-homography_path = './data/homography_photos/1'
-params_path = './data/params/1'
+path = '../../data/original_photos'
+resize_path = '../../data/resize_photos'
+homography_path = '../../data/homography_photos/1'
+params_path = '../../data/params/1'
 pictures_in_folder(path, resize_path, homography_path, params_path)
 
 # path = '../../data/restart_img'
