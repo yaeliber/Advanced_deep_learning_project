@@ -14,17 +14,7 @@ from CustomDataLoader import *
 from tensorUtils import *
 
 
-def loss_implement(p_match, data):
-    M = data['M_ind']
-    I = data['I_ind']
-    J = data['J_ind']
-    loss = torch.tensor(0.0, requires_grad=True)
 
-    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[M[0].long(), M[1].long()])))# sum(i∈M[0] and j∈M[1] -log P[i,j])
-    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]))) # sum(i∈I -log P[i,N+1])
-    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]))) # sum(j∈J -log P[M+1,j])
-    print("loss", loss)
-    return loss
 
 
 def loss_function(match, data, loss_range=1000.0):
@@ -48,6 +38,30 @@ class GAT(torch.nn.Module):
 
         self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
+
+    def loss_implement(self, p_match, data):
+        # for name, param in model.state_dict().items():
+        #     print(name)
+        #     print("requires_grad: ", param.requires_grad)
+
+        M = data['M_ind']
+        I = data['I_ind']
+        J = data['J_ind']
+        loss = torch.tensor(0.0, requires_grad=True)
+
+        loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[M[0].long(), M[1].long()])),
+                                         -1))  # sum(i∈M[0] and j∈M[1] -log P[i,j])
+        loss = torch.add(loss, torch.mul(
+            torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()])),
+            -1))  # sum(i∈I -log P[i,N+1])
+        loss = torch.add(loss, torch.mul(
+            torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])),
+            -1))  # sum(j∈J -log P[M+1,j])
+
+        loss = torch.mul(loss, 1 / (len(M[0]) + len(I) + len(J)))
+        print("loss ", loss)
+        return loss
+
     # return edge indexes according to descriptors (inside and cross)
     # return edges in shape [[sources], [destinations]]
     def get_edge_index(self, desc1, desc2):
@@ -111,12 +125,13 @@ def train(model, optimizer, loader):
 
         p_match, match = model(data)  # Forward pass.
 
-        loss = loss_implement(p_match, data)  # Loss computation.
+        loss = model.loss_implement(p_match, data)  # Loss computation.
         print("params before: ")
         for name, param in model.named_parameters():
             if param.requires_grad:
-                param.retain_grad() #??
+                # param.retain_grad() #??
                 print(name, param.grad)
+        # loss.retain_grad()
         loss.backward()  # Backward pass.
         optimizer.step()  # Update model parameters.
         print("params after: ")
