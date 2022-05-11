@@ -854,16 +854,16 @@ class TorchBackend(Backend):
 
         self.ValFunction = ValFunction
 
-    def to_numpy(self, a):
-        return a.cpu().detach().numpy()
-
-    def from_numpy(self, a, type_as=None):
-        if isinstance(a, float):
-            a = np.array(a)
-        if type_as is None:
-            return torch.from_numpy(a)
-        else:
-            return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
+    # def to_numpy(self, a):
+    #     return a.cpu().detach().numpy()
+    #
+    # def from_numpy(self, a, type_as=None):
+    #     if isinstance(a, float):
+    #         a = np.array(a)
+    #     if type_as is None:
+    #         return torch.from_numpy(a)
+    #     else:
+    #         return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
 
     def set_gradients(self, val, inputs, grads):
 

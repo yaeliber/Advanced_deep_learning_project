@@ -98,7 +98,7 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     b = torch.Tensor(b)
     # res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     res = sinkhorn1(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-    print("line 96 res", res)
+    # print("line 96 res", res)
     max_index_arr = torch.argmax(res, axis=1)
 
     match = []

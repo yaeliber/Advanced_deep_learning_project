@@ -18,12 +18,13 @@ def loss_implement(p_match, data):
     M = data['M_ind']
     I = data['I_ind']
     J = data['J_ind']
-    loss = 0
-    loss -= torch.sum(torch.log(p_match[M[0].long(), M[1].long()])) # sum(i∈M[0] and j∈M[1] -log P[i,j])
-    loss -= torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()])) # sum(i∈I -log P[i,N+1])
-    loss -= torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])) # sum(j∈J -log P[M+1,j])
+    loss = torch.tensor(0.0, requires_grad=True)
 
-    return torch.tensor(loss)
+    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[M[0].long(), M[1].long()])))# sum(i∈M[0] and j∈M[1] -log P[i,j])
+    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]))) # sum(i∈I -log P[i,N+1])
+    loss = torch.add(loss, -1*torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]))) # sum(j∈J -log P[M+1,j])
+    print("loss", loss)
+    return loss
 
 
 def loss_function(match, data, loss_range=1000.0):
@@ -47,7 +48,6 @@ class GAT(torch.nn.Module):
 
         self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
-
     # return edge indexes according to descriptors (inside and cross)
     # return edges in shape [[sources], [destinations]]
     def get_edge_index(self, desc1, desc2):
@@ -82,8 +82,8 @@ class GAT(torch.nn.Module):
     def forward(self, data):
         iters = 2
         desc1, desc2 = data['desc1'], data['desc2']
-        # desc1 = F.normalize(desc1, dim = 0)
-        # desc2 = F.normalize(desc2, dim = 0)
+        desc1 = F.normalize(desc1, dim = 0)
+        desc2 = F.normalize(desc2, dim = 0)
 
         inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
 
@@ -115,14 +115,14 @@ def train(model, optimizer, loader):
         print("params before: ")
         for name, param in model.named_parameters():
             if param.requires_grad:
-                print(name, param.grad.data)
-
+                param.retain_grad() #??
+                print(name, param.grad)
         loss.backward()  # Backward pass.
         optimizer.step()  # Update model parameters.
         print("params after: ")
         for name, param in model.named_parameters():
             if param.requires_grad:
-                print(name, param.grad.data)
+                print(name, param.grad)
         total_loss += loss.item()
 
     return total_loss / len(loader.dataset)
