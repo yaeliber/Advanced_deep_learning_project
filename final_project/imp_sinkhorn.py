@@ -174,9 +174,9 @@ def sinkhorn_stabilized1(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 def list_to_array(*lst):
     r""" Convert a list if in torch format """
     if len(lst) > 1:
-        return [torch.Tensor(a) if isinstance(a, list) else a for a in lst]
+        return [torch.Tensor(a, requires_grad=True) if isinstance(a, list) else a for a in lst]
     else:
-        return torch.Tensor(lst[0]) if isinstance(lst[0], list) else lst[0]
+        return torch.Tensor(lst[0], requires_grad=True) if isinstance(lst[0], list) else lst[0]
 
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
@@ -829,12 +829,12 @@ class TorchBackend(Backend):
         self.rng_ = torch.Generator()
         self.rng_.seed()
 
-        self.__type_list__ = [torch.tensor(1, dtype=torch.float32),
-                              torch.tensor(1, dtype=torch.float64)]
+        self.__type_list__ = [torch.tensor(1, dtype=torch.float32, requires_grad=True),
+                              torch.tensor(1, dtype=torch.float64, requires_grad=True)]
 
         if torch.cuda.is_available():
-            self.__type_list__.append(torch.tensor(1, dtype=torch.float32, device='cuda'))
-            self.__type_list__.append(torch.tensor(1, dtype=torch.float64, device='cuda'))
+            self.__type_list__.append(torch.tensor(1, dtype=torch.float32, device='cuda', requires_grad=True))
+            self.__type_list__.append(torch.tensor(1, dtype=torch.float64, device='cuda', requires_grad=True))
 
         from torch.autograd import Function
 
@@ -937,9 +937,9 @@ class TorchBackend(Backend):
 
     def maximum(self, a, b):
         if isinstance(a, int) or isinstance(a, float):
-            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
+            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device, requires_grad=True)
         if isinstance(b, int) or isinstance(b, float):
-            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
+            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device, requires_grad=True)
         if hasattr(torch, "maximum"):
             return torch.maximum(a, b)
         else:
@@ -947,9 +947,9 @@ class TorchBackend(Backend):
 
     def minimum(self, a, b):
         if isinstance(a, int) or isinstance(a, float):
-            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
+            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device, requires_grad=True)
         if isinstance(b, int) or isinstance(b, float):
-            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
+            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device, requires_grad=True)
         if hasattr(torch, "minimum"):
             return torch.minimum(a, b)
         else:
