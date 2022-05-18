@@ -38,6 +38,8 @@ def kp_not_in_tensor(kp, tensor_kp):
                 break
         if not found:
             output.append(item)
+    if len(output) == 0 :
+        return torch.empty(0)
     return torch.stack((output))
 
 

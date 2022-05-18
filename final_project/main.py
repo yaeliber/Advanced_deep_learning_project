@@ -68,19 +68,29 @@ def linear_assignment_match(desc1, desc2):
 
 
 def sinkhorn_match2(desc1, desc2, dp_percentage):
+    print("sinkhorn_match2")
     len1 = len(desc1)
     len2 = len(desc2)
-    cost_matrix = torch.empty((1, len1, len2), dtype=float)
+    # cost_matrix = torch.empty((1, len1, len2), dtype=float)
 
     # fill the cost matrix by the distance between the descriptors
-    for i in range(len1):
-        for j in range(len2):
-            # cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
-            cost_matrix[0][i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+    # for i in range(len1):
+    #     for j in range(len2):
+    #         # cost_matrix[0][i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
+    #         cost_matrix[0][i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+    d1 = torch.reshape(desc1, (1, desc1.shape[0], 128))
+    d2 = torch.reshape(desc2, (1, desc2.shape[0], 128))
+    cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
 
+    cost_matrix = cost_matrix/(128**0.5)
+
+    print('cost_matrix', cost_matrix)
     min_cost_matrix = torch.min(cost_matrix[0])
     max_cost_matrix = torch.max(cost_matrix[0])
-    cost_matrix[0] = (cost_matrix[0] - min_cost_matrix) / (max_cost_matrix - min_cost_matrix)
+    # cost_matrix[0] = torch.div(torch.sub(cost_matrix[0], min_cost_matrix), torch.sub(max_cost_matrix, min_cost_matrix))
+    # cost_matrix[0] = torch.mul(cost_matrix[0], 2)
+    # cost_matrix[0] = torch.sub(cost_matrix[0], 1)
+    print('cost_matrix', cost_matrix)
     res = log_optimal_transport(cost_matrix, dp_percentage, iters = 1000)
     print("line 96 res", res)
     max_index_arr = torch.argmax(res[0], axis=1)
@@ -90,6 +100,8 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
         if max_index_arr[i] == len2:  # if matched to dustbin
             continue
         dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+        if dist != dist: #dist is nan
+            dist = torch.zeros(1)
         match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
     return res[0], match
@@ -104,8 +116,8 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
         for j in range(len2):
-            # cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
-            cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+            cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
+            # cost_matrix[i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
 
     # fill the dustbin rows and cols to 0
     for i in range(len1 + 1):
@@ -123,8 +135,8 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
 
     a = torch.Tensor(a)
     b = torch.Tensor(b)
-    # res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-    res = sinkhorn1(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
+    res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
+    # res = sinkhorn1(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     # print("line 96 res", res)
     max_index_arr = torch.argmax(res, axis=1)
 

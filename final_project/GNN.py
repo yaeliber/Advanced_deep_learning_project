@@ -30,8 +30,6 @@ class GAT(torch.nn.Module):
     def __init__(self, in_channels=128, out_channels=128):
         super(GAT, self).__init__()
         self.DB_percentage = torch.nn.Parameter(torch.ones(1) * 0.4, requires_grad=True)
-        # self.DB_percentage = 0.4
-        # self.DB_percentage = Variable(torch.tensor(0.4), requires_grad=True)
         self.hid = 1
         self.in_head = 128
         self.out_head = 1
@@ -39,7 +37,7 @@ class GAT(torch.nn.Module):
         self.conv1 = GATConv(in_channels, self.hid, heads=self.in_head, dropout=0.6)
         self.conv2 = GATConv(self.hid * self.in_head, out_channels, concat=False, heads=self.out_head, dropout=0.6)
 
-    def loss_implement(self, p_match, data):
+    def loss_implement(self, match, p_match, data):
         M = data['M_ind']
         I = data['I_ind']
         J = data['J_ind']
@@ -52,7 +50,7 @@ class GAT(torch.nn.Module):
         loss = torch.add(loss, torch.mul(
             torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])),
             -1))/len(J)  # sum(j∈J -log P[M+1,j])
-
+        mij_loss = loss_function(match, data)
         print("loss ", loss)
         return loss
 
@@ -121,12 +119,12 @@ def train(model, optimizer, loader):
         p_match.retain_grad()
         # match.retain_grad()
 
-        loss = model.loss_implement(p_match, data)  # Loss computation.
-        print("params before: ")
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                # param.retain_grad() #??
-                print(name, param.grad)
+        loss = model.loss_implement(match, p_match, data)  # Loss computation.
+        # print("params before: ")
+        # for name, param in model.named_parameters():
+        #     if param.requires_grad:
+        #         # param.retain_grad() #??
+        #         print(name, param.grad)
         # loss.retain_grad()
         # print("loss.grad", loss.grad)
         loss.backward()  # Backward pass.

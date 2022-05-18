@@ -30,3 +30,4 @@ def log_optimal_transport(scores: torch.Tensor, alpha: torch.Tensor, iters: int)
     Z = log_sinkhorn_iterations(couplings, log_mu, log_nu, iters)
     Z = Z - norm  # multiply probabilities by M+N
     return Z
+
