@@ -106,7 +106,7 @@ class GAT(torch.nn.Module):
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
-        p_match, match = sinkhorn_match(desc1, desc2, self.DB_percentage.item())
+        p_match, match = sinkhorn_match2(desc1, desc2, self.DB_percentage)
         return p_match, match
 
 
@@ -128,9 +128,9 @@ def train(model, optimizer, loader):
                 # param.retain_grad() #??
                 print(name, param.grad)
         # loss.retain_grad()
-        print("loss.grad", loss.grad)
+        # print("loss.grad", loss.grad)
         loss.backward()  # Backward pass.
-        print("loss.grad", loss.grad)
+        # print("loss.grad", loss.grad)
         optimizer.step()  # Update model parameters.
         print("params after: ")
         for name, param in model.named_parameters():

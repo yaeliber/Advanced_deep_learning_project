@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 
 from imp_sinkhorn import *
+from superGlueSinkhorn import *
 
 
 # return: list of keypoints objects
@@ -66,6 +67,32 @@ def linear_assignment_match(desc1, desc2):
     return match
 
 
+def sinkhorn_match2(desc1, desc2, dp_percentage):
+    len1 = len(desc1)
+    len2 = len(desc2)
+    cost_matrix = torch.empty((1, len1, len2), dtype=float)
+
+    # fill the cost matrix by the distance between the descriptors
+    for i in range(len1):
+        for j in range(len2):
+            # cost_matrix[i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
+            cost_matrix[0][i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+
+    min_cost_matrix = torch.min(cost_matrix[0])
+    max_cost_matrix = torch.max(cost_matrix[0])
+    cost_matrix[0] = (cost_matrix[0] - min_cost_matrix) / (max_cost_matrix - min_cost_matrix)
+    res = log_optimal_transport(cost_matrix, dp_percentage, iters = 1000)
+    print("line 96 res", res)
+    max_index_arr = torch.argmax(res[0], axis=1)
+
+    match = []
+    for i in range(len1):
+        if max_index_arr[i] == len2:  # if matched to dustbin
+            continue
+        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+        match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
+
+    return res[0], match
 
 def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     dustbin_percentage = dp_percentage
