@@ -78,8 +78,13 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     #     for j in range(len2):
     #         # cost_matrix[0][i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
     #         cost_matrix[0][i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
-    d1 = torch.reshape(desc1, (1, desc1.shape[0], 128))
-    d2 = torch.reshape(desc2, (1, desc2.shape[0], 128))
+    norms1 = torch.linalg.norm(desc1, dim=1, ord=2)
+    norms2 = torch.linalg.norm(desc2, dim=1, ord=2)
+    d1 = torch.div(desc1.T, norms1).T
+    d2 = torch.div(desc2.T, norms2).T
+    d1 = torch.reshape(d1, (1, desc1.shape[0], 128))
+    d2 = torch.reshape(d2, (1, desc2.shape[0], 128))
+    
     cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
 
     cost_matrix = cost_matrix/(128**0.5)
@@ -90,7 +95,7 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     # cost_matrix[0] = torch.div(torch.sub(cost_matrix[0], min_cost_matrix), torch.sub(max_cost_matrix, min_cost_matrix))
     # cost_matrix[0] = torch.mul(cost_matrix[0], 2)
     # cost_matrix[0] = torch.sub(cost_matrix[0], 1)
-    print('cost_matrix', cost_matrix)
+    # print('cost_matrix', cost_matrix)
     res = log_optimal_transport(cost_matrix, dp_percentage, iters = 1000)
     print("line 96 res", res)
     max_index_arr = torch.argmax(res[0], axis=1)

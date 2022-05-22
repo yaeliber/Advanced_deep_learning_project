@@ -42,16 +42,18 @@ class GAT(torch.nn.Module):
         I = data['I_ind']
         J = data['J_ind']
         loss = torch.tensor(0.0, requires_grad=True)
-        loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[M[0].long(), M[1].long()])),
+        loss = torch.add(loss, torch.mul(torch.sum(p_match[M[0].long(), M[1].long()]),
                                          -1))/len(M[0])   # sum(i∈M[0] and j∈M[1] -log P[i,j])
+        print("loss1 ", loss)
         loss = torch.add(loss, torch.mul(
-            torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()])),
+            torch.sum(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]),
             -1))/len(I)  # sum(i∈I -log P[i,N+1])
+        print("loss2 ", loss)
         loss = torch.add(loss, torch.mul(
-            torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()])),
+            torch.sum(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]),
             -1))/len(J)  # sum(j∈J -log P[M+1,j])
         mij_loss = loss_function(match, data)
-        print("loss ", loss)
+        print("loss3 ", loss)
         return loss
 
     # return edge indexes according to descriptors (inside and cross)
