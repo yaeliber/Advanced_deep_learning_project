@@ -71,32 +71,19 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     print("sinkhorn_match2")
     len1 = len(desc1)
     len2 = len(desc2)
-    # cost_matrix = torch.empty((1, len1, len2), dtype=float)
-
-    # fill the cost matrix by the distance between the descriptors
-    # for i in range(len1):
-    #     for j in range(len2):
-    #         # cost_matrix[0][i][j] = torch.linalg.norm(desc1[i] - desc2[j])  # L2
-    #         cost_matrix[0][i][j] = torch.dot(desc1[i],desc2[j]).item()/(128**0.5)
+    # normalize the descriptors
     norms1 = torch.linalg.norm(desc1, dim=1, ord=2)
     norms2 = torch.linalg.norm(desc2, dim=1, ord=2)
     d1 = torch.div(desc1.T, norms1).T
     d2 = torch.div(desc2.T, norms2).T
     d1 = torch.reshape(d1, (1, desc1.shape[0], 128))
     d2 = torch.reshape(d2, (1, desc2.shape[0], 128))
-    
+    # fill the cost matrix by the inner dot between the descriptors
     cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
-
-    cost_matrix = cost_matrix/(128**0.5)
+    cost_matrix = cost_matrix / (128 ** 0.5)
 
     print('cost_matrix', cost_matrix)
-    min_cost_matrix = torch.min(cost_matrix[0])
-    max_cost_matrix = torch.max(cost_matrix[0])
-    # cost_matrix[0] = torch.div(torch.sub(cost_matrix[0], min_cost_matrix), torch.sub(max_cost_matrix, min_cost_matrix))
-    # cost_matrix[0] = torch.mul(cost_matrix[0], 2)
-    # cost_matrix[0] = torch.sub(cost_matrix[0], 1)
-    # print('cost_matrix', cost_matrix)
-    res = log_optimal_transport(cost_matrix, dp_percentage, iters = 1000)
+    res = log_optimal_transport(cost_matrix, dp_percentage, iters=1000)
     print("line 96 res", res)
     max_index_arr = torch.argmax(res[0], axis=1)
 
@@ -105,11 +92,12 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
         if max_index_arr[i] == len2:  # if matched to dustbin
             continue
         dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
-        if dist != dist: #dist is nan
+        if dist != dist:  # dist is nan
             dist = torch.zeros(1)
         match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
     return res[0], match
+
 
 def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     dustbin_percentage = dp_percentage
