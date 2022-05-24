@@ -44,11 +44,11 @@ class GAT(torch.nn.Module):
         loss = torch.tensor(0.0, requires_grad=True)
         loss = torch.add(loss, torch.mul(torch.sum(p_match[M[0].long(), M[1].long()]),
                                          -1))/len(M[0])   # sum(i∈M[0] and j∈M[1] -log P[i,j])
-        print("loss1 ", loss)
+        # print("loss1 ", loss)
         loss = torch.add(loss, torch.mul(
             torch.sum(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]),
             -1))/len(I)  # sum(i∈I -log P[i,N+1])
-        print("loss2 ", loss)
+        # print("loss2 ", loss)
         loss = torch.add(loss, torch.mul(
             torch.sum(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]),
             -1))/len(J)  # sum(j∈J -log P[M+1,j])
@@ -88,10 +88,10 @@ class GAT(torch.nn.Module):
         return torch.LongTensor(inside_edge),  torch.LongTensor(cross_edge)
 
     def forward(self, data):
-        iters = 2
+        iters = 1
         desc1, desc2 = data['desc1'], data['desc2']
-        desc1 = F.normalize(desc1, dim = 0)
-        desc2 = F.normalize(desc2, dim = 0)
+        # desc1 = F.normalize(desc1, dim = 0)
+        # desc2 = F.normalize(desc2, dim = 0)
 
         inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
 
@@ -132,10 +132,10 @@ def train(model, optimizer, loader):
         loss.backward()  # Backward pass.
         # print("loss.grad", loss.grad)
         optimizer.step()  # Update model parameters.
-        print("params after: ")
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                print(name, param.grad)
+        # print("params after: ")
+        # for name, param in model.named_parameters():
+        #     if param.requires_grad:
+        #         print(name, param.grad)
         total_loss += loss.item()
 
     return total_loss / len(loader.dataset)

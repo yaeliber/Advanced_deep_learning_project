@@ -7,6 +7,7 @@ import tensorflow as tf
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
+import torch.nn.functional as F
 
 from imp_sinkhorn import *
 from superGlueSinkhorn import *
@@ -67,34 +68,61 @@ def linear_assignment_match(desc1, desc2):
     return match
 
 
+def arange_like(x, dim: int):
+    return x.new_ones(x.shape[dim]).cumsum(0) - 1  # traceable in 1.1
+
 def sinkhorn_match2(desc1, desc2, dp_percentage):
-    print("sinkhorn_match2")
+    print("on sinkhorn_match2")
     len1 = len(desc1)
     len2 = len(desc2)
     # normalize the descriptors
-    norms1 = torch.linalg.norm(desc1, dim=1, ord=2)
-    norms2 = torch.linalg.norm(desc2, dim=1, ord=2)
-    d1 = torch.div(desc1.T, norms1).T
-    d2 = torch.div(desc2.T, norms2).T
-    d1 = torch.reshape(d1, (1, desc1.shape[0], 128))
-    d2 = torch.reshape(d2, (1, desc2.shape[0], 128))
+    # norms1 = torch.linalg.norm(desc1, dim=1, ord=2)
+    # norms2 = torch.linalg.norm(desc2, dim=1, ord=2)
+    # d1 = torch.div(desc1.T, norms1).T
+    # d2 = torch.div(desc2.T, norms2).T
+    d1 = torch.reshape(desc1, (1, desc1.shape[0], 128))
+    d2 = torch.reshape(desc2, (1, desc2.shape[0], 128))
     # fill the cost matrix by the inner dot between the descriptors
     cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
-    cost_matrix = cost_matrix / (128 ** 0.5)
+    # cost_matrix = cost_matrix / (128 ** 0.5)
 
     print('cost_matrix', cost_matrix)
-    res = log_optimal_transport(cost_matrix, dp_percentage, iters=1000)
+    res = log_optimal_transport(cost_matrix, dp_percentage, iters=100)
     print("line 96 res", res)
     max_index_arr = torch.argmax(res[0], axis=1)
 
+    # Get the matches with score above "match_threshold".
+    max0, max1 = res[:, :-1, :-1].max(2), res[:, :-1, :-1].max(1)
+    indices0, indices1 = max0.indices, max1.indices
+    mutual0 = arange_like(indices0, 1)[None] == indices1.gather(1, indices0)
+    mutual1 = arange_like(indices1, 1)[None] == indices0.gather(1, indices1)
+    zero = res.new_tensor(0)
+    mscores0 = torch.where(mutual0, max0.values.exp(), zero)
+    mscores1 = torch.where(mutual1, mscores0.gather(1, indices1), zero)
+    valid0 = mutual0 & (mscores0 > 0.2)
+    valid1 = mutual1 & valid0.gather(1, indices1)
+    indices0 = torch.where(valid0, indices0, indices0.new_tensor(-1))
+    indices1 = torch.where(valid1, indices1, indices1.new_tensor(-1))
+
     match = []
     for i in range(len1):
-        if max_index_arr[i] == len2:  # if matched to dustbin
+        # print("indices0 ", indices0[0])
+        # print("indices0[i] ", indices0[0][i])
+        if indices0[0][i] == -1:  # if matched to dustbin
             continue
-        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[indices0[0][i]]))
         if dist != dist:  # dist is nan
             dist = torch.zeros(1)
-        match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
+        match.append(cv2.DMatch(i, indices0[0][i].item(), int(dist.item())))
+    # match = []
+    # for i in range(len1):
+    #     if max_index_arr[i] == len2:  # if matched to dustbin
+    #         continue
+    #     dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+    #     if dist != dist:  # dist is nan
+    #         dist = torch.zeros(1)
+    #     match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
+
 
     return res[0], match
 
@@ -195,15 +223,15 @@ def make_match(path1, path2, path3, algorithm):
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
 
-    # fig = plt.figure(figsize=(10, 10))
-    # fig.add_subplot(1, 2, 1)
-    # plt.axis('off')
-    # plt.imshow(img1)
-    #
-    # fig.add_subplot(1, 2, 2)
-    # plt.axis('off')
-    # plt.imshow(img2)
-    # plt.show()
+    fig = plt.figure(figsize=(10, 10))
+    fig.add_subplot(1, 2, 1)
+    plt.axis('off')
+    plt.imshow(img1)
+
+    fig.add_subplot(1, 2, 2)
+    plt.axis('off')
+    plt.imshow(img2)
+    plt.show()
 
     # extract keyPoints from params we made on dataSetCreate
     kp1 = array_to_key_points(data['kp1'])
@@ -221,7 +249,7 @@ def make_match(path1, path2, path3, algorithm):
     if algorithm == 'linear_assignment_match':
         best_matches = linear_assignment_match(desc1, desc2)
     if algorithm == 'sinkhorn_match':
-        best_matches = sinkhorn_match(desc1, desc2)
+        __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * 0.4)
 
     if len(best_matches) < 4:
         return None, 0, 50, 50, 10
@@ -234,8 +262,8 @@ def make_match(path1, path2, path3, algorithm):
     match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
     error_H, H_mean, H_std = H_error(H, path3)
-
-    # print_wraped_images(img1, img2, img2_warped)
+    if algorithm == 'sinkhorn_match':
+        print_wraped_images(img1, img2, img2_warped)
 
     return H, match_score, error_H, H_mean, H_std
 
