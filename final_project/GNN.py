@@ -41,7 +41,12 @@ class GAT(torch.nn.Module):
         M = data['M_ind']
         I = data['I_ind']
         J = data['J_ind']
+        print("p_match ", p_match)
+        p_match += 0.02
         loss = torch.tensor(0.0, requires_grad=True)
+        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[M[0].long(), M[1].long()].exp())), -1))/len(M[0])
+        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()].exp())), -1))/len(I)
+        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()].exp())), -1))/len(J)
         loss = torch.add(loss, torch.mul(torch.sum(p_match[M[0].long(), M[1].long()]),
                                          -1))/len(M[0])   # sum(i∈M[0] and j∈M[1] -log P[i,j])
         # print("loss1 ", loss)
@@ -98,10 +103,11 @@ class GAT(torch.nn.Module):
         x = torch.Tensor(np.concatenate((desc1, desc2)))
         for i in range(iters):
             print('x shape: ', x.shape)
+            # print("x before conv1: ", x)
             x = self.conv1(x, inside_edge)
+            # print("x after conv1: ", x)
             print('x shape: ', x.shape)
             x = F.elu(x)
-
         x = self.conv2(x, cross_edge)
 
         desc1 = x[0:len(desc1)]

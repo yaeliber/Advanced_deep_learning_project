@@ -76,20 +76,20 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     len1 = len(desc1)
     len2 = len(desc2)
     # normalize the descriptors
-    # norms1 = torch.linalg.norm(desc1, dim=1, ord=2)
-    # norms2 = torch.linalg.norm(desc2, dim=1, ord=2)
+    # norms1 = torch.linalg.norm(desc1, dim=1, ord=2)+0.01
+    # norms2 = torch.linalg.norm(desc2, dim=1, ord=2)+0.01
     # d1 = torch.div(desc1.T, norms1).T
     # d2 = torch.div(desc2.T, norms2).T
     d1 = torch.reshape(desc1, (1, desc1.shape[0], 128))
     d2 = torch.reshape(desc2, (1, desc2.shape[0], 128))
     # fill the cost matrix by the inner dot between the descriptors
     cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
-    # cost_matrix = cost_matrix / (128 ** 0.5)
+    cost_matrix = cost_matrix / (128 ** 0.5)
 
     print('cost_matrix', cost_matrix)
     res = log_optimal_transport(cost_matrix, dp_percentage, iters=100)
     print("line 96 res", res)
-    max_index_arr = torch.argmax(res[0], axis=1)
+    # max_index_arr = torch.argmax(res[0], axis=1)
 
     # Get the matches with score above "match_threshold".
     max0, max1 = res[:, :-1, :-1].max(2), res[:, :-1, :-1].max(1)
@@ -114,6 +114,7 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
         if dist != dist:  # dist is nan
             dist = torch.zeros(1)
         match.append(cv2.DMatch(i, indices0[0][i].item(), int(dist.item())))
+
     # match = []
     # for i in range(len1):
     #     if max_index_arr[i] == len2:  # if matched to dustbin
