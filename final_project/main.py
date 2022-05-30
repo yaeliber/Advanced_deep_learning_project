@@ -71,6 +71,7 @@ def linear_assignment_match(desc1, desc2):
 def arange_like(x, dim: int):
     return x.new_ones(x.shape[dim]).cumsum(0) - 1  # traceable in 1.1
 
+
 def sinkhorn_match2(desc1, desc2, dp_percentage):
     print("on sinkhorn_match2")
     len1 = len(desc1)
@@ -123,7 +124,6 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     #     if dist != dist:  # dist is nan
     #         dist = torch.zeros(1)
     #     match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
-
 
     return res[0], match
 
@@ -346,6 +346,29 @@ def get_difficult_level(H):
     return H_mean, H_std
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------         2 Level Matching         ------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+def intersection_match(kp1, kp2, best_matches1, best_matches2):
+    intersection_best_match = []
+
+    src_pts1 = [kp1[m.queryIdx].pt for m in best_matches1]
+    dst_pts1 = [kp2[m.trainIdx].pt for m in best_matches1]
+
+    src_pts2 = [kp1[m.queryIdx].pt for m in best_matches2]
+    dst_pts2 = [kp2[m.trainIdx].pt for m in best_matches2]
+
+
+    for index1, src in enumerate(src_pts1):
+        list_index2 = [i for i, x in enumerate(src_pts2) if x == src]
+        for i in list_index2:
+            if dst_pts1[index1] == dst_pts2[i]:
+                intersection_best_match.append(best_matches1[index1])
+
+    return intersection_best_match
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 def main(folder_path, folder_number):
     error_H_sinkhorn = []
     error_H_knn = []
@@ -424,8 +447,12 @@ if __name__ == '__main__':
     # folder_path = './data/resize_photos/'
     folder_path = '../../data/test/'
     folder_number = 1
-    main(folder_path, folder_number)
-
+    # main(folder_path, folder_number)
+    kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
+    kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
+    best_matches1 = [{"queryIdx" :0, "trainIdx":2}, {"queryIdx" :1, "trainIdx":1}, {"queryIdx" :1, "trainIdx":3}]
+    best_matches2 = [{"queryIdx":4, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
+    print(intersection_match(kp1, kp2, best_matches1, best_matches2))
     # =================================================================================================================
 
     # file_name = 'paris.jpg'
