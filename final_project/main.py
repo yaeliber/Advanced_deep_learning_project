@@ -358,7 +358,6 @@ def intersection_match(kp1, kp2, best_matches1, best_matches2):
     src_pts2 = [kp1[m.queryIdx].pt for m in best_matches2]
     dst_pts2 = [kp2[m.trainIdx].pt for m in best_matches2]
 
-
     for index1, src in enumerate(src_pts1):
         list_index2 = [i for i, x in enumerate(src_pts2) if x == src]
         for i in list_index2:
@@ -366,6 +365,53 @@ def intersection_match(kp1, kp2, best_matches1, best_matches2):
                 intersection_best_match.append(best_matches1[index1])
 
     return intersection_best_match
+
+
+def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
+    kp11 = []
+    kp22 = []
+    desc11 = []
+    desc22 = []
+    best_matches = []
+    best_matches2 = []
+
+    # first algorithm
+    if algorithm1 == 'knn_match':  # all knn matches without
+        best_matches = knn_match(desc1, desc2, False)
+    if algorithm1 == 'knn_match_v2':
+        best_matches = knn_match(desc1, desc2, True)
+    if algorithm1 == 'linear_assignment_match':
+        best_matches = linear_assignment_match(desc1, desc2)
+    if algorithm1 == 'sinkhorn_match':
+        __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * 0.4)
+
+    # build new keypoints and descriptors thar are not matched
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches])
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches])
+
+    for index, item in enumerate(kp1):
+        if item.pt not in src_pts:
+            kp11.append(item)
+            desc11.append(desc1[index])
+
+    for index, item in enumerate(kp2):
+        if item.pt not in dst_pts:
+            kp22.append(item)
+            desc22.append(desc2[index])
+
+    # second algorithm
+    if algorithm2 == 'knn_match':  # all knn matches without
+        best_matches2 = knn_match(desc11, desc22, False)
+    if algorithm2 == 'knn_match_v2':
+        best_matches2 = knn_match(desc11, desc22, True)
+    if algorithm2 == 'linear_assignment_match':
+        best_matches2 = linear_assignment_match(desc11, desc22)
+    if algorithm2 == 'sinkhorn_match':
+        __, best_matches2 = sinkhorn_match2(torch.as_tensor(desc11), torch.as_tensor(desc22), torch.ones(1) * 0.4)
+
+    # extend the best matches of the two algorithms
+    # todo - add to all elements in best_matches2 the length of best_matches
+    return kp1.extend(kp11), kp2.extend(kp22), best_matches.extend(best_matches2)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -450,8 +496,8 @@ if __name__ == '__main__':
     # main(folder_path, folder_number)
     kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
-    best_matches1 = [{"queryIdx" :0, "trainIdx":2}, {"queryIdx" :1, "trainIdx":1}, {"queryIdx" :1, "trainIdx":3}]
-    best_matches2 = [{"queryIdx":4, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
+    best_matches1 = [{"queryIdx": 0, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
+    best_matches2 = [{"queryIdx": 4, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
     print(intersection_match(kp1, kp2, best_matches1, best_matches2))
     # =================================================================================================================
 
