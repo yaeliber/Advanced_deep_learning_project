@@ -85,11 +85,11 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     d2 = torch.reshape(desc2, (1, desc2.shape[0], 128))
     # fill the cost matrix by the inner dot between the descriptors
     cost_matrix = torch.einsum('bnd,bmd->bnm', d1, d2)
-    cost_matrix = cost_matrix / (128 ** 0.5)
+    # cost_matrix = cost_matrix / (128 ** 0.5)
 
-    print('cost_matrix', cost_matrix)
-    res = log_optimal_transport(cost_matrix, dp_percentage, iters=100)
-    print("line 96 res", res)
+    # print('cost_matrix', cost_matrix)
+    res = log_optimal_transport(cost_matrix, dp_percentage, iters=700)
+    # print("line 96 res", res)
     # max_index_arr = torch.argmax(res[0], axis=1)
 
     # Get the matches with score above "match_threshold".
@@ -198,23 +198,23 @@ def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=''):
 
 
 def print_wraped_images(img1, img2, img2_warped):
-    print('--------- In print_wraped_images ---------')
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 3, 1)
-    plt.title('img1')
-    plt.axis('off')
-    plt.imshow(img1)
-
-    fig.add_subplot(1, 3, 2)
-    plt.title('img2_warped')
-    plt.axis('off')
-    plt.imshow(img2_warped)
-
-    fig.add_subplot(1, 3, 3)
-    plt.title('img2')
-    plt.axis('off')
-    plt.imshow(img2)
-    plt.show()
+    # print('--------- In print_wraped_images ---------')
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 3, 1)
+    # plt.title('img1')
+    # plt.axis('off')
+    # plt.imshow(img1)
+    #
+    # fig.add_subplot(1, 3, 2)
+    # plt.title('img2_warped')
+    # plt.axis('off')
+    # plt.imshow(img2_warped)
+    #
+    # fig.add_subplot(1, 3, 3)
+    # plt.title('img2')
+    # plt.axis('off')
+    # plt.imshow(img2)
+    # plt.show()
     print('\n\n')
 
 
@@ -223,15 +223,15 @@ def make_match(path1, path2, path3, algorithm):
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
 
-    fig = plt.figure(figsize=(10, 10))
-    fig.add_subplot(1, 2, 1)
-    plt.axis('off')
-    plt.imshow(img1)
-
-    fig.add_subplot(1, 2, 2)
-    plt.axis('off')
-    plt.imshow(img2)
-    plt.show()
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 2, 1)
+    # plt.axis('off')
+    # plt.imshow(img1)
+    #
+    # fig.add_subplot(1, 2, 2)
+    # plt.axis('off')
+    # plt.imshow(img2)
+    # plt.show()
 
     # extract keyPoints from params we made on dataSetCreate
     kp1 = array_to_key_points(data['kp1'])
@@ -466,7 +466,7 @@ def main(folder_path, folder_number):
         match_score_linear_assignment.append(match_score1)
         print()
 
-    plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 10))
     plt.subplot(1, 2, 1)
     plt.title('error_H')
     plt.plot(error_H_sinkhorn, 'or', label='sinkhorn')
@@ -478,8 +478,9 @@ def main(folder_path, folder_number):
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
     plt.plot(mean_H, 'ob')
+    fig.savefig('../../data/graphs/errorH.png')
 
-    plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 10))
     plt.title('match_score')
     ax = plt.gca()
     ax.set_ylim([0, 1])
@@ -489,6 +490,7 @@ def main(folder_path, folder_number):
     plt.plot(match_score_knn_v2, 'og', label='knn_v2')
     plt.plot(match_score_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
+    fig.savefig('../../data/graphs/MIJscore.png')
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
@@ -497,12 +499,13 @@ def main(folder_path, folder_number):
     mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
     mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
     mean_MIJ_score.append(np.sum(match_score_linear_assignment) / len(match_score_linear_assignment))
-    plt.figure(figsize=(5, 5))
+    fig = plt.figure(figsize=(5, 5))
     plt.title('mean_match_score')
     labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
+    fig.savefig('../../data/graphs/meanMatchScore.png')
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
@@ -511,24 +514,25 @@ def main(folder_path, folder_number):
     mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
     mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
     mean_H_error.append(np.sum(error_H_linear_assignment) / len(error_H_linear_assignment))
-    plt.figure(figsize=(5, 5))
+    fig = plt.figure(figsize=(5, 5))
     plt.title('mean_H_error')
     labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
     plt.bar(labels, mean_H_error, width=0.4)
+    fig.savefig('../../data/graphs/meanHScore.png')
 
     plt.show()
 
 
 if __name__ == '__main__':
-    # folder_path = './data/resize_photos/'
-    folder_path = '../../data/test/'
+    folder_path = '../../data/resize_photos/'
+    # folder_path = '../../data/test/'
     folder_number = 1
-    # main(folder_path, folder_number)
-    kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
-    kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
-    best_matches1 = [{"queryIdx": 0, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
-    best_matches2 = [{"queryIdx": 4, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
-    print(intersection_match(kp1, kp2, best_matches1, best_matches2))
+    main(folder_path, folder_number)
+    # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
+    # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
+    # best_matches1 = [{"queryIdx": 0, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
+    # best_matches2 = [{"queryIdx": 4, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
+    # print(intersection_match(kp1, kp2, best_matches1, best_matches2))
     # =================================================================================================================
 
     # file_name = 'paris.jpg'
