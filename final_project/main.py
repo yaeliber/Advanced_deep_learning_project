@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import ot as ot
 import torch
-#import tensorflow as tf
+# import tensorflow as tf
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
@@ -414,13 +414,67 @@ def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
     if algorithm2 == 'sinkhorn_match2':
         __, best_matches2 = sinkhorn_match2(torch.as_tensor(desc11), torch.as_tensor(desc22), torch.ones(1) * 0.4)
 
-    len_best_matches1 = len(best_matches1)
+    len_best_matches1 = len(best_matches)
     # extend the best matches of the two algorithms
-    for match in  best_matches2:
+    for match in best_matches2:
         match.queryIdx += len_best_matches1
         match.trainIdx += len_best_matches1
 
     return kp1.extend(kp11), kp2.extend(kp22), best_matches.extend(best_matches2)
+
+
+def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
+    img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
+    img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
+    data = np.load(path3, allow_pickle=True)
+
+    # fig = plt.figure(figsize=(10, 10))
+    # fig.add_subplot(1, 2, 1)
+    # plt.axis('off')
+    # plt.imshow(img1)
+    #
+    # fig.add_subplot(1, 2, 2)
+    # plt.axis('off')
+    # plt.imshow(img2)
+    # plt.show()
+
+    # extract keyPoints from params we made on dataSetCreate
+    kp1 = array_to_key_points(data['kp1'])
+    kp2 = array_to_key_points(data['kp2'])
+
+    print('kp1: ', len(kp1))
+    print('kp2: ', len(kp2))
+
+    desc1, desc2 = data['desc1'], data['desc2']
+
+    if flag == 'intersection':
+        knn2_matches = knn_match(desc1, desc2, True)
+        __, sinkhorn_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), 0.4)
+        linear_assignment_matches = linear_assignment_match(desc1, desc2)
+
+        if algorithm1 == 'knn_match_v2' and algorithm2 == 'sinkhorn_match':
+            best_matches = intersection_match(kp1, kp2, knn2_matches, sinkhorn_matches)
+
+        if algorithm1 == 'knn_match_v2' and algorithm2 == 'linear_assignment_match':
+            best_matches = intersection_match(kp1, kp2, knn2_matches, linear_assignment_matches)
+
+        if algorithm1 == 'sinkhorn_match' and algorithm2 == 'linear_assignment_match':
+            best_matches = intersection_match(kp1, kp2, sinkhorn_matches, linear_assignment_matches)
+
+    if len(best_matches) < 4:
+        return None, 0, 50, 50, 10
+
+    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm1)
+
+    if H is None:
+        return None, 0, 50, 50, 10
+
+    match_score = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
+
+    error_H, H_mean, H_std = H_error(H, path3)
+    # print_wraped_images(img1, img2, img2_warped)
+
+    return H, match_score, error_H, H_mean, H_std
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -461,7 +515,8 @@ def main(folder_path, folder_number):
         error_H_knn_v2.append(error_H3)
         match_score_knn_v2.append(match_score3)
 
-        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
+                                                                           'linear_assignment_match')
         error_H_linear_assignment.append(error_H1)
         match_score_linear_assignment.append(match_score1)
         print()
@@ -523,11 +578,97 @@ def main(folder_path, folder_number):
     plt.show()
 
 
+def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy'
+    error_H_knn2_sinkhorn = []
+    error_H_knn2_linear_assignment = []
+    error_H_sinkhorn_linear_assignment = []
+
+    mean_H = []
+    match_score_knn2_sinkhorn = []
+    match_score_knn2_linear_assignment = []
+    match_score_sinkhorn_linear_assignment = []
+
+    assert (os.path.exists(folder_path))
+    for file in os.scandir(folder_path):
+        file_name = file.name
+        print('\n================================ ', file_name, ' ================================')
+        path1 = '../../data/resize_photos/' + file_name
+        path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
+        path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
+
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match2(path1, path2, path3, 'knn_match_v2',
+                                                                            'sinkhorn_match', flag)
+        error_H_knn2_sinkhorn.append(error_H1)
+        match_score_knn2_sinkhorn.append(match_score1)
+        mean_H.append(H_mean)
+
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match2(path1, path2, path3, 'knn_match_v2',
+                                                                            'linear_assignment_match', flag)
+        error_H_knn2_linear_assignment.append(error_H1)
+        match_score_knn2_linear_assignment.append(match_score1)
+
+        H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match2(path1, path2, path3, 'sinkhorn_match',
+                                                                            'linear_assignment_match', flag)
+        error_H_sinkhorn_linear_assignment.append(error_H2)
+        match_score_sinkhorn_linear_assignment.append(match_score2)
+
+        print()
+
+    fig = plt.figure(figsize=(10, 10))
+    plt.subplot(1, 2, 1)
+    plt.title('error_H of ' + flag)
+    plt.plot(error_H_knn2_sinkhorn, 'or', label='knn v2 + sinkhorn')
+    plt.plot(error_H_knn2_linear_assignment, 'oc', label='knn v2 + linear_assignment')
+    plt.plot(error_H_sinkhorn_linear_assignment, 'ob', label='sinkhorn + linear_assignment')
+    plt.legend()
+    plt.subplot(1, 2, 2)
+    plt.title('H mean difficult')
+    plt.plot(mean_H, 'ob')
+    fig.savefig('../../data/graphs/' + flag + '/errorH.png')
+
+    fig = plt.figure(figsize=(10, 10))
+    plt.title('match_score')
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.plot(match_score_knn2_sinkhorn, 'or', label='knn v2 + sinkhorn')
+    plt.plot(match_score_knn2_linear_assignment, 'oc', label='knn v2 + linear_assignment')
+    plt.plot(match_score_sinkhorn_linear_assignment, 'ob', label='sinkhorn + linear_assignment')
+    plt.legend()
+    fig.savefig('../../data/graphs/' + flag + '/MIJscore.png')
+
+    # A graph that shows the MIJ_score average according to each algorithm
+    mean_MIJ_score = []
+    mean_MIJ_score.append(np.sum(match_score_knn2_sinkhorn) / len(match_score_knn2_sinkhorn))
+    mean_MIJ_score.append(np.sum(match_score_knn2_linear_assignment) / len(match_score_knn2_linear_assignment))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn_linear_assignment) / len(match_score_sinkhorn_linear_assignment))
+    fig = plt.figure(figsize=(5, 5))
+    plt.title('mean_match_score')
+    labels = ['knn v2 + sinkhorn', 'knn v2 + linear_assignment', 'sinkhorn + linear_assignment']
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.bar(labels, mean_MIJ_score, width=0.4)
+    fig.savefig('../../data/graphs/' + flag + '/meanMatchScore.png')
+
+    # A graph that shows the H_error average according to each algorithm
+    mean_H_error = []
+    mean_H_error.append(np.sum(error_H_knn2_sinkhorn) / len(error_H_knn2_sinkhorn))
+    mean_H_error.append(np.sum(error_H_knn2_linear_assignment) / len(error_H_knn2_linear_assignment))
+    mean_H_error.append(np.sum(error_H_sinkhorn_linear_assignment) / len(error_H_sinkhorn_linear_assignment))
+    fig = plt.figure(figsize=(5, 5))
+    plt.title('mean_H_error')
+    labels = ['knn v2 + sinkhorn', 'knn v2 + linear_assignment', 'sinkhorn + linear_assignment']
+    plt.bar(labels, mean_H_error, width=0.4)
+    fig.savefig('../../data/graphs/' + flag + '/meanHScore.png')
+
+    plt.show()
+
+
 if __name__ == '__main__':
-    folder_path = '../../data/resize_photos/'
-    # folder_path = '../../data/test/'
+    #folder_path = '../../data/resize_photos/'
+    folder_path = '../../data/test/'
     folder_number = 1
-    main(folder_path, folder_number)
+    #main(folder_path, folder_number)
+    main2(folder_path, folder_number, 'intersection')
 
     # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
