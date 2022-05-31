@@ -664,8 +664,8 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
 
 
 if __name__ == '__main__':
-    #folder_path = '../../data/resize_photos/'
-    folder_path = '../../data/test/'
+    folder_path = '../../data/resize_photos/'
+    # folder_path = '../../data/test/'
     folder_number = 1
     #main(folder_path, folder_number)
     main2(folder_path, folder_number, 'intersection')
