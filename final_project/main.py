@@ -533,7 +533,7 @@ def main(folder_path, folder_number):
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
     plt.plot(mean_H, 'ob')
-    fig.savefig('../../data/graphs/errorH.png')
+    fig.savefig('../graphs/errorH.png')
 
     fig = plt.figure(figsize=(10, 10))
     plt.title('match_score')
@@ -545,7 +545,7 @@ def main(folder_path, folder_number):
     plt.plot(match_score_knn_v2, 'og', label='knn_v2')
     plt.plot(match_score_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
-    fig.savefig('../../data/graphs/MIJscore.png')
+    fig.savefig('../graphs/MIJscore.png')
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
@@ -560,7 +560,7 @@ def main(folder_path, folder_number):
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../../data/graphs/meanMatchScore.png')
+    fig.savefig('../graphs/meanMatchScore.png')
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
@@ -573,7 +573,7 @@ def main(folder_path, folder_number):
     plt.title('mean_H_error')
     labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
     plt.bar(labels, mean_H_error, width=0.4)
-    fig.savefig('../../data/graphs/meanHScore.png')
+    fig.savefig('../graphs/meanHScore.png')
 
     plt.show()
 
@@ -624,7 +624,7 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
     plt.plot(mean_H, 'ob')
-    fig.savefig('../../data/graphs/' + flag + '/errorH.png')
+    fig.savefig('../graphs/' + flag + '/errorH.png')
 
     fig = plt.figure(figsize=(10, 10))
     plt.title('match_score')
@@ -634,7 +634,7 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     plt.plot(match_score_knn2_linear_assignment, 'oc', label='knn v2 + linear_assignment')
     plt.plot(match_score_sinkhorn_linear_assignment, 'ob', label='sinkhorn + linear_assignment')
     plt.legend()
-    fig.savefig('../../data/graphs/' + flag + '/MIJscore.png')
+    fig.savefig('../graphs/' + flag + '/MIJscore.png')
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
@@ -647,7 +647,7 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../../data/graphs/' + flag + '/meanMatchScore.png')
+    fig.savefig('../graphs/' + flag + '/meanMatchScore.png')
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
@@ -658,17 +658,17 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     plt.title('mean_H_error')
     labels = ['knn v2 + sinkhorn', 'knn v2 + linear_assignment', 'sinkhorn + linear_assignment']
     plt.bar(labels, mean_H_error, width=0.4)
-    fig.savefig('../../data/graphs/' + flag + '/meanHScore.png')
+    fig.savefig('../graphs/' + flag + '/meanHScore.png')
 
     plt.show()
 
 
 if __name__ == '__main__':
-    folder_path = '../../data/resize_photos/'
-    # folder_path = '../../data/test/'
+    # folder_path = '../../data/resize_photos/'
+    folder_path = '../../data/test/'
     folder_number = 1
-    #main(folder_path, folder_number)
-    main2(folder_path, folder_number, 'intersection')
+    main(folder_path, folder_number)
+    # main2(folder_path, folder_number, 'intersection')
 
     # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
