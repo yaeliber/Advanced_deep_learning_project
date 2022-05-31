@@ -158,7 +158,6 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     a = torch.Tensor(a)
     b = torch.Tensor(b)
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
-    # res = sinkhorn1(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     # print("line 96 res", res)
     max_index_arr = torch.argmax(res, axis=1)
 
@@ -250,6 +249,8 @@ def make_match(path1, path2, path3, algorithm):
     if algorithm == 'linear_assignment_match':
         best_matches = linear_assignment_match(desc1, desc2)
     if algorithm == 'sinkhorn_match':
+        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), 0.4)
+    if algorithm == 'sinkhorn_match2':
         __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * 0.4)
 
     if len(best_matches) < 4:
@@ -383,6 +384,8 @@ def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
     if algorithm1 == 'linear_assignment_match':
         best_matches = linear_assignment_match(desc1, desc2)
     if algorithm1 == 'sinkhorn_match':
+        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), 0.4)
+    if algorithm1 == 'sinkhorn_match2':
         __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * 0.4)
 
     # build new keypoints and descriptors thar are not matched
@@ -407,22 +410,33 @@ def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
     if algorithm2 == 'linear_assignment_match':
         best_matches2 = linear_assignment_match(desc11, desc22)
     if algorithm2 == 'sinkhorn_match':
+        __, best_matches2 = sinkhorn_match(torch.as_tensor(desc11), torch.as_tensor(desc22), 0.4)
+    if algorithm2 == 'sinkhorn_match2':
         __, best_matches2 = sinkhorn_match2(torch.as_tensor(desc11), torch.as_tensor(desc22), torch.ones(1) * 0.4)
 
+    len_best_matches1 = len(best_matches1)
     # extend the best matches of the two algorithms
-    # todo - add to all elements in best_matches2 the length of best_matches
+    for match in  best_matches2:
+        match.queryIdx += len_best_matches1
+        match.trainIdx += len_best_matches1
+
     return kp1.extend(kp11), kp2.extend(kp22), best_matches.extend(best_matches2)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 def main(folder_path, folder_number):
     error_H_sinkhorn = []
+    error_H_sinkhorn2 = []
     error_H_knn = []
     error_H_knn_v2 = []
+    error_H_linear_assignment = []
+
     mean_H = []
     match_score_sinkhorn = []
+    match_score_sinkhorn2 = []
     match_score_knn = []
     match_score_knn_v2 = []
+    match_score_linear_assignment = []
     assert (os.path.exists(folder_path))
     for file in os.scandir(folder_path):
         file_name = file.name
@@ -435,6 +449,10 @@ def main(folder_path, folder_number):
         match_score_sinkhorn.append(match_score1)
         mean_H.append(H_mean)
 
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match2')
+        error_H_sinkhorn2.append(error_H1)
+        match_score_sinkhorn2.append(match_score1)
+
         H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
         error_H_knn.append(error_H2)
         match_score_knn.append(match_score2)
@@ -442,14 +460,20 @@ def main(folder_path, folder_number):
         H2_dest_to_src, match_score3, error_H3, H_mean, H_std = make_match(path1, path2, path3, 'knn_match_v2')
         error_H_knn_v2.append(error_H3)
         match_score_knn_v2.append(match_score3)
+
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
+        error_H_linear_assignment.append(error_H1)
+        match_score_linear_assignment.append(match_score1)
         print()
 
     plt.figure(figsize=(10, 10))
     plt.subplot(1, 2, 1)
     plt.title('error_H')
     plt.plot(error_H_sinkhorn, 'or', label='sinkhorn')
+    plt.plot(error_H_sinkhorn2, 'oc', label='sinkhorn2')
     plt.plot(error_H_knn, 'ob', label='knn')
     plt.plot(error_H_knn_v2, 'og', label='knn_v2')
+    plt.plot(error_H_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
@@ -460,18 +484,22 @@ def main(folder_path, folder_number):
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.plot(match_score_sinkhorn, 'or', label='sinkhorn')
+    plt.plot(match_score_sinkhorn2, 'oc', label='sinkhorn2')
     plt.plot(match_score_knn, 'ob', label='knn')
     plt.plot(match_score_knn_v2, 'og', label='knn_v2')
+    plt.plot(match_score_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
     mean_MIJ_score.append(np.sum(match_score_sinkhorn) / len(match_score_sinkhorn))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn2) / len(match_score_sinkhorn2))
     mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
     mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
+    mean_MIJ_score.append(np.sum(match_score_linear_assignment) / len(match_score_linear_assignment))
     plt.figure(figsize=(5, 5))
     plt.title('mean_match_score')
-    labels = ['sinkhorn', 'knn', 'knn_v2']
+    labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
@@ -479,11 +507,13 @@ def main(folder_path, folder_number):
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
     mean_H_error.append(np.sum(error_H_sinkhorn) / len(error_H_sinkhorn))
+    mean_H_error.append(np.sum(error_H_sinkhorn2) / len(error_H_sinkhorn2))
     mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
     mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
+    mean_H_error.append(np.sum(error_H_linear_assignment) / len(error_H_linear_assignment))
     plt.figure(figsize=(5, 5))
     plt.title('mean_H_error')
-    labels = ['sinkhorn', 'knn', 'knn_v2']
+    labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
     plt.bar(labels, mean_H_error, width=0.4)
 
     plt.show()
