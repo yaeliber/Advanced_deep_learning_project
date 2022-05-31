@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import ot as ot
 import torch
-import tensorflow as tf
+#import tensorflow as tf
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
@@ -528,6 +528,7 @@ if __name__ == '__main__':
     # folder_path = '../../data/test/'
     folder_number = 1
     main(folder_path, folder_number)
+
     # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
     # best_matches1 = [{"queryIdx": 0, "trainIdx": 2}, {"queryIdx": 1, "trainIdx": 1}, {"queryIdx": 1, "trainIdx": 3}]
