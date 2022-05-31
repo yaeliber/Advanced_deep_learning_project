@@ -414,11 +414,12 @@ def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
     if algorithm2 == 'sinkhorn_match2':
         __, best_matches2 = sinkhorn_match2(torch.as_tensor(desc11), torch.as_tensor(desc22), torch.ones(1) * 0.4)
 
-    len_best_matches1 = len(best_matches)
+    len_kp1 = len(kp1)
+    len_kp2 = len(kp2)
     # extend the best matches of the two algorithms
     for match in best_matches2:
-        match.queryIdx += len_best_matches1
-        match.trainIdx += len_best_matches1
+        match.queryIdx += len_kp1
+        match.trainIdx += len_kp2
 
     return kp1.extend(kp11), kp2.extend(kp22), best_matches.extend(best_matches2)
 
@@ -460,6 +461,16 @@ def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
 
         if algorithm1 == 'sinkhorn_match' and algorithm2 == 'linear_assignment_match':
             best_matches = intersection_match(kp1, kp2, sinkhorn_matches, linear_assignment_matches)
+
+    if flag == 'multy':
+        if algorithm1 == 'knn_match_v2' and algorithm2 == 'sinkhorn_match':
+            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
+
+        if algorithm1 == 'knn_match_v2' and algorithm2 == 'linear_assignment_match':
+            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
+
+        if algorithm1 == 'sinkhorn_match' and algorithm2 == 'linear_assignment_match':
+            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
 
     if len(best_matches) < 4:
         return None, 0, 50, 50, 10
