@@ -516,20 +516,19 @@ def main(folder_path, folder_number):
         match_score_sinkhorn.append(match_score1)
         mean_H.append(H_mean)
 
-        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match2')
-        error_H_sinkhorn2.append(error_H1)
-        match_score_sinkhorn2.append(match_score1)
+        # H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match2')
+        # error_H_sinkhorn2.append(error_H1)
+        # match_score_sinkhorn2.append(match_score1)
 
-        H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
-        error_H_knn.append(error_H2)
-        match_score_knn.append(match_score2)
+        # H2_dest_to_src, match_score2, error_H2, H_mean, H_std = make_match(path1, path2, path3, 'knn_match')
+        # error_H_knn.append(error_H2)
+        # match_score_knn.append(match_score2)
 
         H2_dest_to_src, match_score3, error_H3, H_mean, H_std = make_match(path1, path2, path3, 'knn_match_v2')
         error_H_knn_v2.append(error_H3)
         match_score_knn_v2.append(match_score3)
 
-        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3,
-                                                                           'linear_assignment_match')
+        H1_dest_to_src, match_score1, error_H1, H_mean, H_std = make_match(path1, path2, path3, 'linear_assignment_match')
         error_H_linear_assignment.append(error_H1)
         match_score_linear_assignment.append(match_score1)
         print()
@@ -538,57 +537,58 @@ def main(folder_path, folder_number):
     plt.subplot(1, 2, 1)
     plt.title('error_H')
     plt.plot(error_H_sinkhorn, 'or', label='sinkhorn')
-    plt.plot(error_H_sinkhorn2, 'oc', label='sinkhorn2')
-    plt.plot(error_H_knn, 'ob', label='knn')
+    # plt.plot(error_H_sinkhorn2, 'oc', label='sinkhorn2')
+    # plt.plot(error_H_knn, 'ob', label='knn')
     plt.plot(error_H_knn_v2, 'og', label='knn_v2')
     plt.plot(error_H_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
     plt.plot(mean_H, 'ob')
-    fig.savefig('../graphs/errorH.png')
+    fig.savefig('../graphs/errorH2.png')
 
     fig = plt.figure(figsize=(10, 10))
     plt.title('match_score')
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.plot(match_score_sinkhorn, 'or', label='sinkhorn')
-    plt.plot(match_score_sinkhorn2, 'oc', label='sinkhorn2')
-    plt.plot(match_score_knn, 'ob', label='knn')
+    # plt.plot(match_score_sinkhorn2, 'oc', label='sinkhorn2')
+    # plt.plot(match_score_knn, 'ob', label='knn')
     plt.plot(match_score_knn_v2, 'og', label='knn_v2')
     plt.plot(match_score_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
-    fig.savefig('../graphs/MIJscore.png')
+    fig.savefig('../graphs/MIJscore2.png')
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
     mean_MIJ_score.append(np.sum(match_score_sinkhorn) / len(match_score_sinkhorn))
-    mean_MIJ_score.append(np.sum(match_score_sinkhorn2) / len(match_score_sinkhorn2))
-    mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
+    # mean_MIJ_score.append(np.sum(match_score_sinkhorn2) / len(match_score_sinkhorn2))
+    # mean_MIJ_score.append(np.sum(match_score_knn) / len(match_score_knn))
     mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
     mean_MIJ_score.append(np.sum(match_score_linear_assignment) / len(match_score_linear_assignment))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean_match_score')
-    labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
+    labels = ['sinkhorn', 'knn_v2', 'linear_assignment'] #'sinkhorn2', 'knn',
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../graphs/meanMatchScore.png')
+    fig.savefig('../graphs/meanMatchScore2.png')
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
     mean_H_error.append(np.sum(error_H_sinkhorn) / len(error_H_sinkhorn))
-    mean_H_error.append(np.sum(error_H_sinkhorn2) / len(error_H_sinkhorn2))
-    mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
+    # mean_H_error.append(np.sum(error_H_sinkhorn2) / len(error_H_sinkhorn2))
+    # mean_H_error.append(np.sum(error_H_knn) / len(error_H_knn))
     mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
     mean_H_error.append(np.sum(error_H_linear_assignment) / len(error_H_linear_assignment))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean_H_error')
-    labels = ['sinkhorn', 'sinkhorn2', 'knn', 'knn_v2', 'linear_assignment']
+    labels = ['sinkhorn', 'knn_v2', 'linear_assignment'] #'sinkhorn2', 'knn',
     plt.bar(labels, mean_H_error, width=0.4)
-    fig.savefig('../graphs/meanHScore.png')
-
+    fig.savefig('../graphs/meanHScore2.png')
+    print("mean_H_error: ", mean_H_error)
     plt.show()
+
 
 
 def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy'
@@ -672,7 +672,8 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     labels = ['knn v2 + sinkhorn', 'knn v2 + linear_assignment', 'sinkhorn + linear_assignment']
     plt.bar(labels, mean_H_error, width=0.4)
     fig.savefig('../graphs/' + flag + '/meanHScore.png')
-
+    print("mean_H_error: ", mean_H_error)
+    
     plt.show()
 
 
@@ -680,9 +681,9 @@ if __name__ == '__main__':
     folder_path = '../../data/resize_photos/'
     # folder_path = '../../data/test/'
     folder_number = 1
-    # main(folder_path, folder_number)
+    main(folder_path, folder_number)
     # main2(folder_path, folder_number, 'intersection')
-    main2(folder_path, folder_number, 'multy')
+    # main2(folder_path, folder_number, 'multy')
 
     # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
