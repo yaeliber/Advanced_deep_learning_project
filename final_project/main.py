@@ -420,8 +420,10 @@ def multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2):
     for match in best_matches2:
         match.queryIdx += len_kp1
         match.trainIdx += len_kp2
-
-    return kp1.extend(kp11), kp2.extend(kp22), best_matches.extend(best_matches2)
+    kp1.extend(kp11)
+    kp2.extend(kp22)
+    best_matches.extend(best_matches2)
+    return kp1, kp2, best_matches
 
 
 def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
@@ -464,13 +466,13 @@ def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
 
     if flag == 'multy':
         if algorithm1 == 'knn_match_v2' and algorithm2 == 'sinkhorn_match':
-            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
+            kp1, kp2, best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
 
         if algorithm1 == 'knn_match_v2' and algorithm2 == 'linear_assignment_match':
-            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
+            kp1, kp2, best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
 
         if algorithm1 == 'sinkhorn_match' and algorithm2 == 'linear_assignment_match':
-            kp1, kp2 , best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
+            kp1, kp2, best_matches = multy_level_match(kp1, kp2, desc1, desc2, algorithm1, algorithm2)
 
     if len(best_matches) < 4:
         return None, 0, 50, 50, 10
@@ -675,11 +677,12 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
 
 
 if __name__ == '__main__':
-    # folder_path = '../../data/resize_photos/'
-    folder_path = '../../data/test/'
+    folder_path = '../../data/resize_photos/'
+    # folder_path = '../../data/test/'
     folder_number = 1
-    main(folder_path, folder_number)
+    # main(folder_path, folder_number)
     # main2(folder_path, folder_number, 'intersection')
+    main2(folder_path, folder_number, 'multy')
 
     # kp1 = [{"pt": (1, 7)}, {"pt": (2, 3)}, {"pt": (5, 5)}, {"pt": (9, 0)}, {"pt": (1, 1)}]
     # kp2 = [{"pt": (5, 4)}, {"pt": (2, 4)}, {"pt": (6, 7)}, {"pt": (8, 8)}, {"pt": (9, 5)}]
