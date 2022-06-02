@@ -673,7 +673,7 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     plt.bar(labels, mean_H_error, width=0.4)
     fig.savefig('../graphs/' + flag + '/meanHScore.png')
     print("mean_H_error: ", mean_H_error)
-    
+
     plt.show()
 
 
