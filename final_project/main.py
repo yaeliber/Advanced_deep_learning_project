@@ -72,7 +72,7 @@ def arange_like(x, dim: int):
     return x.new_ones(x.shape[dim]).cumsum(0) - 1  # traceable in 1.1
 
 
-def sinkhorn_match2(desc1, desc2, dp_percentage):
+def sinkhorn_match2(desc1, desc2, dp_percentage, improve=False):
     print("on sinkhorn_match2")
     len1 = len(desc1)
     len2 = len(desc2)
@@ -88,9 +88,7 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     # cost_matrix = cost_matrix / (128 ** 0.5)
 
     # print('cost_matrix', cost_matrix)
-    res = log_optimal_transport(cost_matrix, dp_percentage, iters=700)
-    # print("line 96 res", res)
-    # max_index_arr = torch.argmax(res[0], axis=1)
+    res = log_optimal_transport(cost_matrix, dp_percentage, iters=1000)
 
     # Get the matches with score above "match_threshold".
     max0, max1 = res[:, :-1, :-1].max(2), res[:, :-1, :-1].max(1)
@@ -116,15 +114,6 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
             dist = torch.zeros(1)
         match.append(cv2.DMatch(i, indices0[0][i].item(), int(dist.item())))
 
-    # match = []
-    # for i in range(len1):
-    #     if max_index_arr[i] == len2:  # if matched to dustbin
-    #         continue
-    #     dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
-    #     if dist != dist:  # dist is nan
-    #         dist = torch.zeros(1)
-    #     match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
-
     return res[0], match
 
 
@@ -133,7 +122,6 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4, improve=False):
     len1 = len(desc1)
     len2 = len(desc2)
     cost_matrix = torch.empty((len1 + 1, len2 + 1), dtype=float)
-    # print(cost_matrix.shape)
 
     # fill the cost matrix by the distance between the descriptors
     for i in range(len1):
@@ -177,12 +165,6 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4, improve=False):
 
         dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[int(max_indices[i][0])]))
         match.append(cv2.DMatch(i, int(max_indices[i][0]), int(dist.item())))
-
-    # for i in range(len1):
-    #     if max_index_arr[i] == len2:  # if matched to dustbin
-    #         continue
-    #     dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
-    #     match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
     return res, match
 
@@ -234,7 +216,7 @@ def print_wraped_images(img1, img2, img2_warped):
     print('\n\n')
 
 
-def make_match(path1, path2, path3, algorithm):
+def make_match(path1, path2, path3, algorithm, db=0.4):
     img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
@@ -265,19 +247,21 @@ def make_match(path1, path2, path3, algorithm):
     if algorithm == 'linear_assignment_match':
         best_matches = linear_assignment_match(desc1, desc2)
     if algorithm == 'sinkhorn_match_v2':
-        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), 0.4, True)
+        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), db, True)
     if algorithm == 'sinkhorn_match':
-        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), 0.4, False)
+        __, best_matches = sinkhorn_match(torch.as_tensor(desc1), torch.as_tensor(desc2), db, False)
+    if algorithm == 'sinkhorn_match2_v2':
+        __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * db, True)
     if algorithm == 'sinkhorn_match2':
-        __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * 0.4)
+        __, best_matches = sinkhorn_match2(torch.as_tensor(desc1), torch.as_tensor(desc2), torch.ones(1) * db, False)
 
     if len(best_matches) < 4:
-        return None, 0, 50, 50, 10
+        return None, 0, 0, 50, 50, 10
 
     H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm)
 
     if H is None:
-        return None, 0, 50, 50, 10
+        return None, 0, 0, 50, 50, 10
 
     match_score, match_score2 = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
@@ -341,7 +325,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
     print('J_counter: ', J_counter)
     score = (M_counter + I_counter + J_counter) / (len(M[0]) + len(I) + len(J))
     print('match score: ', score)
-    score2 = (M_counter/len(M[0])) + (I_counter/len(I)) + (J_counter/len(J))
+    score2 = (M_counter / len(M[0])) + (I_counter / len(I)) + (J_counter / len(J))
     print('match score2: ', score2)
     return score, score2
 
@@ -501,7 +485,7 @@ def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
     if H is None:
         return None, 0, 50, 50, 10
 
-    match_score ,match_score2= get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
+    match_score, match_score2 = get_match_score(kp1, kp2, best_matches, data['M'], data['I'], data['J'])
 
     error_H, H_mean, H_std = H_error(H, path3)
     # print_wraped_images(img1, img2, img2_warped)
@@ -533,24 +517,27 @@ def main(folder_path, folder_number):
         path1 = '../../data/resize_photos/' + file_name
         path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
         path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
-        H1_dest_to_src, match_score , match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match')
+        H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+                                                                                       'sinkhorn_match')
         error_H_sinkhorn.append(error_H)
         match_score_sinkhorn.append(match_score)
         match_score2_sinkhorn.append(match_score2)
         mean_H.append(H_mean)
 
-        H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3, 'sinkhorn_match_v2')
+        H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+                                                                                       'sinkhorn_match_v2')
         error_H_sinkhorn_v2.append(error_H)
         match_score_sinkhorn_v2.append(match_score)
         match_score2_sinkhorn_v2.append(match_score2)
 
-        H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3, 'knn_match_v2')
+        H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+                                                                                       'knn_match_v2')
         error_H_knn_v2.append(error_H)
         match_score_knn_v2.append(match_score)
         match_score2_knn_v2.append(match_score2)
 
         H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
-                                                                           'linear_assignment_match')
+                                                                                       'linear_assignment_match')
         error_H_linear_assignment.append(error_H)
         match_score_linear_assignment.append(match_score)
         match_score2_linear_assignment.append(match_score2)
@@ -734,12 +721,111 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
 
     plt.show()
 
+def sinkhorn_compare(folder_path, folder_number):
+    error_H_sinkhorn = [[],[],[],[],[]]
+    error_H_sinkhorn_v2 = [[],[],[],[],[]]
+    error_H_sinkhorn2 = [[],[],[],[],[]]
+    error_H_sinkhorn2_v2 = [[],[],[],[],[]]
+
+    match_score_sinkhorn = [[],[],[],[],[]]
+    match_score_sinkhorn_v2 = [[],[],[],[],[]]
+    match_score_sinkhorn2 = [[],[],[],[],[]]
+    match_score_sinkhorn2_v2 = [[],[],[],[],[]]
+
+    match_score2_sinkhorn = [[],[],[],[],[]]
+    match_score2_sinkhorn_v2 = [[],[],[],[],[]]
+    match_score2_sinkhorn2 = [[],[],[],[],[]]
+    match_score2_sinkhorn2_v2 = [[],[],[],[],[]]
+    params = [0.2, 0.3, 0.4, 0.5, 0.6]
+    assert (os.path.exists(folder_path))
+    for file in os.scandir(folder_path):
+        file_name = file.name
+        print('\n================================ ', file_name, ' ================================')
+        path1 = '../../data/resize_photos/' + file_name
+        path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
+        path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
+        for ind, item in enumerate(params):
+            H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+                                                                                           'sinkhorn_match', item)
+            error_H_sinkhorn[ind].append(error_H)
+            match_score_sinkhorn[ind].append(match_score)
+            match_score2_sinkhorn[ind].append(match_score2)
+
+            H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+                                                                                           'sinkhorn_match_v2', item)
+            error_H_sinkhorn_v2[ind].append(error_H)
+            match_score_sinkhorn_v2[ind].append(match_score)
+            match_score2_sinkhorn_v2[ind].append(match_score2)
+
+            # H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+            #                                                                                'sinkhorn_match2', item)
+            # error_H_sinkhorn2[ind].append(error_H)
+            # match_score_sinkhorn2[ind].append(match_score)
+            # match_score2_sinkhorn2[ind].append(match_score2)
+
+            # H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+            #                                                                                'sinkhorn_match2_v2', item)
+            # error_H_sinkhorn2_v2[ind].append(error_H)
+            # match_score_sinkhorn2_v2[ind].append(match_score)
+            # match_score2_sinkhorn2_v2[ind].append(match_score2)
+    alg = ['sinkhorn_match', 'sinkhorn_match_v2'] #, 'sinkhorn_match2' , 'sinkhorn_match2_v2'
+    mean_MIJ_score = [[],[]]
+    for ind, item in enumerate(params):
+        # A graph that shows the MIJ_score average according to each algorithm
+        mean_MIJ_score[0].append(np.sum(match_score_sinkhorn[ind]) / len(match_score_sinkhorn[ind]))
+        mean_MIJ_score[1].append(np.sum(match_score_sinkhorn_v2[ind]) / len(match_score_sinkhorn_v2[ind]))
+
+    fig = plt.figure(figsize=(5, 5))
+    plt.title('mean_match_score')
+    ax = plt.gca()
+    ax.set_ylim([0, 1])
+    plt.plot(params, mean_MIJ_score[0], 'c-o', label='sinkhorn')
+    plt.plot(params, mean_MIJ_score[1], 'g-o', label='sinkhorn_v2')
+    plt.legend()
+    plt.grid(True)
+    fig.savefig('../graphs/4/MIJscore.png')
+    print("mean_MIJ_score", mean_MIJ_score)
+
+    mean_MIJ_score2 = [[], []]
+    for ind, item in enumerate(params):
+        # A graph that shows the MIJ_score average according to each algorithm
+        mean_MIJ_score2[0].append(np.sum(match_score2_sinkhorn[ind]) / len(match_score2_sinkhorn[ind]))
+        mean_MIJ_score2[1].append(np.sum(match_score2_sinkhorn_v2[ind]) / len(match_score2_sinkhorn_v2[ind]))
+
+    fig = plt.figure(figsize=(5, 5))
+    plt.title('mean_match_score2')
+    ax = plt.gca()
+    ax.set_ylim([0, 3])
+    plt.plot(params, mean_MIJ_score2[0], 'c-o', label='sinkhorn')
+    plt.plot(params, mean_MIJ_score2[1], 'g-o', label='sinkhorn_v2')
+    plt.legend()
+    plt.grid(True)
+    fig.savefig('../graphs/4/MIJscore2.png')
+    print("mean_MIJ_score2", mean_MIJ_score2)
+
+    error_H = [[], []]
+    for ind, item in enumerate(params):
+        # A graph that shows the MIJ_score average according to each algorithm
+        error_H[0].append(np.sum(error_H_sinkhorn[ind]) / len(error_H_sinkhorn[ind]))
+        error_H[1].append(np.sum(error_H_sinkhorn_v2[ind]) / len(error_H_sinkhorn_v2[ind]))
+
+    fig = plt.figure(figsize=(5, 5))
+    plt.title('error_H')
+    ax = plt.gca()
+    plt.plot(params, error_H[0], 'c-o', label='sinkhorn')
+    plt.plot(params, error_H[1], 'g-o', label='sinkhorn_v2')
+    plt.legend()
+    plt.grid(True)
+    fig.savefig('../graphs/4/mean_error_H.png')
+    print("mean_error_H", error_H)
+    plt.show()
 
 if __name__ == '__main__':
     # folder_path = '../../data/resize_photos/'
     folder_path = '../../data/test/'
     folder_number = 1
-    main(folder_path, folder_number)
+    sinkhorn_compare(folder_path, folder_number)
+    # main(folder_path, folder_number)
     # main2(folder_path, folder_number, 'intersection')
     # main2(folder_path, folder_number, 'multy')
     # main2(folder_path, folder_number, 'combination')
