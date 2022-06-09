@@ -42,21 +42,21 @@ class GAT(torch.nn.Module):
         I = data['I_ind']
         J = data['J_ind']
         print("p_match ", p_match)
-        p_match += 0.02
+        p_match -= 0.02
         loss = torch.tensor(0.0, requires_grad=True)
-        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[M[0].long(), M[1].long()].exp())), -1))/len(M[0])
-        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()].exp())), -1))/len(I)
-        # loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()].exp())), -1))/len(J)
-        loss = torch.add(loss, torch.mul(torch.sum(p_match[M[0].long(), M[1].long()]),
-                                         -1))/len(M[0])   # sum(i∈M[0] and j∈M[1] -log P[i,j])
-        # print("loss1 ", loss)
-        loss = torch.add(loss, torch.mul(
-            torch.sum(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]),
-            -1))/len(I)  # sum(i∈I -log P[i,N+1])
-        # print("loss2 ", loss)
-        loss = torch.add(loss, torch.mul(
-            torch.sum(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]),
-            -1))/len(J)  # sum(j∈J -log P[M+1,j])
+        loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[M[0].long(), M[1].long()].exp())), -1))/len(M[0])
+        loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()].exp())), -1))/len(I)
+        loss = torch.add(loss, torch.mul(torch.sum(torch.log(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()].exp())), -1))/len(J)
+        # loss = torch.add(loss, torch.mul(torch.sum(p_match[M[0].long(), M[1].long()]),
+        #                                  -1))/len(M[0])   # sum(i∈M[0] and j∈M[1] -log P[i,j])
+        # # print("loss1 ", loss)
+        # loss = torch.add(loss, torch.mul(
+        #     torch.sum(p_match[I.long(), torch.Tensor([len(data['kp2'])] * len(I)).long()]),
+        #     -1))/len(I)  # sum(i∈I -log P[i,N+1])
+        # # print("loss2 ", loss)
+        # loss = torch.add(loss, torch.mul(
+        #     torch.sum(p_match[torch.Tensor([len(data['kp1'])] * len(J)).long(), J.long()]),
+        #     -1))/len(J)  # sum(j∈J -log P[M+1,j])
         mij_loss = loss_function(match, data)
         print("loss3 ", loss)
         return loss
@@ -101,14 +101,14 @@ class GAT(torch.nn.Module):
         inside_edge, cross_edge = self.get_edge_index(desc1, desc2)
 
         x = torch.Tensor(np.concatenate((desc1, desc2)))
-        for i in range(iters):
-            print('x shape: ', x.shape)
-            # print("x before conv1: ", x)
-            x = self.conv1(x, inside_edge)
-            # print("x after conv1: ", x)
-            print('x shape: ', x.shape)
-            x = F.elu(x)
-        x = self.conv2(x, cross_edge)
+        # for i in range(iters):
+        #     print('x shape: ', x.shape)
+        #     # print("x before conv1: ", x)
+        #     x = self.conv1(x, inside_edge)
+        #     # print("x after conv1: ", x)
+        #     print('x shape: ', x.shape)
+        #     x = F.elu(x)
+        # x = self.conv2(x, cross_edge)
 
         desc1 = x[0:len(desc1)]
         desc2 = x[len(desc1):]
@@ -163,7 +163,7 @@ def test(model, loader):
 if __name__ == '__main__':
     train_csv_path = '../../data/params/files_train_name.csv'
     test_csv_path = '../../data/params/files_test_name.csv'
-    npz_folder_path = '../../data/params/' + '1'
+    npz_folder_path = '../../data/params/' + '2'
     train_dataset = NpzDataLoader(train_csv_path, npz_folder_path)
     # test_dataset = NpzDataLoader(test_csv_path, npz_folder_path)
 
