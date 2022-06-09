@@ -128,7 +128,7 @@ def sinkhorn_match2(desc1, desc2, dp_percentage):
     return res[0], match
 
 
-def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
+def sinkhorn_match(desc1, desc2, dp_percentage=0.4, improve=False):
     dustbin_percentage = dp_percentage
     len1 = len(desc1)
     len2 = len(desc2)
@@ -159,14 +159,30 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4):
     b = torch.Tensor(b)
     res = ot.sinkhorn(a, b, cost_matrix, 10, method='sinkhorn_stabilized')
     # print("line 96 res", res)
-    max_index_arr = torch.argmax(res, axis=1)
+    # max_index_arr = torch.argmax(res, axis=1)
+    max_arr = torch.topk(res, 2)
+    max_values = max_arr.values
+    max_indices = max_arr.indices
 
     match = []
+    threshold = 0.9
     for i in range(len1):
-        if max_index_arr[i] == len2:  # if matched to dustbin
+        # if matched to dustbin
+        if int(max_indices[i][0]) == len2:
             continue
-        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
-        match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
+
+        # best match is too close to the second best
+        if improve and ((int(max_values[i][0]) * threshold) < int(max_values[i][1])):
+            continue
+
+        dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[int(max_indices[i][0])]))
+        match.append(cv2.DMatch(i, int(max_indices[i][0]), int(dist.item())))
+
+    # for i in range(len1):
+    #     if max_index_arr[i] == len2:  # if matched to dustbin
+    #         continue
+    #     dist = torch.floor(torch.linalg.norm(desc1[i] - desc2[max_index_arr[i]]))
+    #     match.append(cv2.DMatch(i, max_index_arr[i].item(), int(dist.item())))
 
     return res, match
 
@@ -598,14 +614,12 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     error_H_sinkhorn = []
     error_H_knn_v2 = []
 
-
     mean_H = []
     match_score_knn2_sinkhorn_mult = []
     match_score_linear_assignment_sinkhorn_mult = []
     match_score_knn2_sinkhorn_intersection = []
     match_score_sinkhorn = []
     match_score_knn_v2 = []
-
 
     assert (os.path.exists(folder_path))
     for file in os.scandir(folder_path):
@@ -694,7 +708,8 @@ def main2(folder_path, folder_number, flag):  # flag is 'intersection' or 'multy
     mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean_H_error')
-    labels = ['knn v2 +\n sinkhorn multy', 'linear_assignment +\n sinkhorn multy', 'knn v2 +\n sinkhorn intersection', 'sinkhorn', 'knn v2']
+    labels = ['knn v2 +\n sinkhorn multy', 'linear_assignment +\n sinkhorn multy', 'knn v2 +\n sinkhorn intersection',
+              'sinkhorn', 'knn v2']
     plt.bar(labels, mean_H_error, width=0.4)
     # fig.savefig('../graphs/' + flag + '/meanHScore.png')
     fig.savefig('../graphs/meanHScore3.png')
