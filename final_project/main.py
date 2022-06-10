@@ -325,7 +325,7 @@ def get_match_score(kp1, kp2, best_matches, M, I, J):
     print('J_counter: ', J_counter)
     score = (M_counter + I_counter + J_counter) / (len(M[0]) + len(I) + len(J))
     print('match score: ', score)
-    score2 = (M_counter / len(M[0])) + (I_counter / len(I)) + (J_counter / len(J))
+    score2 = M_counter / len(M[0]) #) + (I_counter / len(I)) + (J_counter / len(J))
     print('match score2: ', score2)
     return score, score2
 
@@ -588,13 +588,13 @@ def main(folder_path, folder_number):
     mean_MIJ_score.append(np.sum(match_score2_knn_v2) / len(match_score2_knn_v2))
     mean_MIJ_score.append(np.sum(match_score2_linear_assignment) / len(match_score2_linear_assignment))
     fig = plt.figure(figsize=(5, 5))
-    plt.title('mean_match_score2')
+    plt.title('mean M score:')
     labels = ['sinkhorn', 'sinkhorn_v2', 'knn_v2', 'linear_assignment']  # 'sinkhorn2', 'knn',
     ax = plt.gca()
-    ax.set_ylim([0, 3])
+    ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../graphs/3/meanMatchScore2.png')
-    print("mean match score2:", mean_MIJ_score)
+    fig.savefig('../graphs/3/meanMScore.png')
+    print("mean M score:", mean_MIJ_score)
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
@@ -821,11 +821,11 @@ def sinkhorn_compare(folder_path, folder_number):
     plt.show()
 
 if __name__ == '__main__':
-    # folder_path = '../../data/resize_photos/'
-    folder_path = '../../data/test/'
+    folder_path = '../../data/resize_photos/'
+    # folder_path = '../../data/test/'
     folder_number = 1
-    sinkhorn_compare(folder_path, folder_number)
-    # main(folder_path, folder_number)
+    # sinkhorn_compare(folder_path, folder_number)
+    main(folder_path, folder_number)
     # main2(folder_path, folder_number, 'intersection')
     # main2(folder_path, folder_number, 'multy')
     # main2(folder_path, folder_number, 'combination')
