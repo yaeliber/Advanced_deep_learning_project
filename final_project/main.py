@@ -169,11 +169,14 @@ def sinkhorn_match(desc1, desc2, dp_percentage=0.4, improve=False):
     return res, match
 
 
-def find_homography(img1, img2, kp1, kp2, best_matches, algorithm=''):
+def find_homography(img1, img2, kp1, kp2, best_matches, algorithm, flag=False):
     print('--------- In find_homography ---------')
     src_pts = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in best_matches]).reshape(-1, 1, 2)
-    H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)  # None to min squres
+    if not flag:
+        H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
+    else:
+        H, mask = cv2.findHomography(dst_pts, src_pts, None, 5.0)  # None to min squres
     print('H: ', H)
     if H is None:
         return None, None, None
@@ -216,7 +219,7 @@ def print_wraped_images(img1, img2, img2_warped):
     print('\n\n')
 
 
-def make_match(path1, path2, path3, algorithm, db=0.4):
+def make_match(path1, path2, path3, algorithm, flag, db=0.4):
     img1 = cv2.cvtColor(cv2.imread(path1), cv2.COLOR_BGR2RGB)
     img2 = cv2.cvtColor(cv2.imread(path2), cv2.COLOR_BGR2RGB)
     data = np.load(path3, allow_pickle=True)
@@ -258,7 +261,7 @@ def make_match(path1, path2, path3, algorithm, db=0.4):
     if len(best_matches) < 4:
         return None, 0, 0, 50, 50, 10
 
-    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm)
+    H, mask, img2_warped = find_homography(img1, img2, kp1, kp2, best_matches, algorithm, flag)
 
     if H is None:
         return None, 0, 0, 50, 50, 10
@@ -495,21 +498,24 @@ def make_match2(path1, path2, path3, algorithm1, algorithm2, flag):
 
 # ----------------------------------------------------------------------------------------------------------------------
 def main(folder_path, folder_number):
-    error_H_sinkhorn = []
-    error_H_sinkhorn_v2 = []
-    error_H_knn_v2 = []
-    error_H_linear_assignment = []
+    error_H_sinkhorn_M = []
+    error_H_sinkhorn_R = []
+    error_H_sinkhorn_v2_M = []
+    error_H_sinkhorn_v2_R = []
+
 
     mean_H = []
-    match_score_sinkhorn = []
-    match_score_sinkhorn_v2 = []
-    match_score_knn_v2 = []
-    match_score_linear_assignment = []
+    match_score_sinkhorn_M = []
+    match_score_sinkhorn_R = []
+    match_score_sinkhorn_v2_M = []
+    match_score_sinkhorn_v2_R = []
 
-    match_score2_sinkhorn = []
-    match_score2_sinkhorn_v2 = []
-    match_score2_knn_v2 = []
-    match_score2_linear_assignment = []
+
+    match_score2_sinkhorn_M = []
+    match_score2_sinkhorn_R = []
+    match_score2_sinkhorn_v2_M = []
+    match_score2_sinkhorn_v2_R = []
+
     assert (os.path.exists(folder_path))
     for file in os.scandir(folder_path):
         file_name = file.name
@@ -518,95 +524,103 @@ def main(folder_path, folder_number):
         path2 = '../../data/homography_photos/' + str(folder_number) + '/' + file_name
         path3 = '../../data/params/' + str(folder_number) + '/' + file_name + '.npz'
         H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
-                                                                                       'sinkhorn_match')
-        error_H_sinkhorn.append(error_H)
-        match_score_sinkhorn.append(match_score)
-        match_score2_sinkhorn.append(match_score2)
+                                                                                       'sinkhorn_match', True)
+        error_H_sinkhorn_M.append(error_H)
+        match_score_sinkhorn_M.append(match_score)
+        match_score2_sinkhorn_M.append(match_score2)
         mean_H.append(H_mean)
 
         H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
-                                                                                       'sinkhorn_match_v2')
-        error_H_sinkhorn_v2.append(error_H)
-        match_score_sinkhorn_v2.append(match_score)
-        match_score2_sinkhorn_v2.append(match_score2)
+                                                                                       'sinkhorn_match', False)
+        error_H_sinkhorn_R.append(error_H)
+        match_score_sinkhorn_R.append(match_score)
+        match_score2_sinkhorn_R.append(match_score2)
 
         H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
-                                                                                       'knn_match_v2')
-        error_H_knn_v2.append(error_H)
-        match_score_knn_v2.append(match_score)
-        match_score2_knn_v2.append(match_score2)
+                                                                                       'sinkhorn_match_v2', True)
+        error_H_sinkhorn_v2_M.append(error_H)
+        match_score_sinkhorn_v2_M.append(match_score)
+        match_score2_sinkhorn_v2_M.append(match_score2)
 
         H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
-                                                                                       'linear_assignment_match')
-        error_H_linear_assignment.append(error_H)
-        match_score_linear_assignment.append(match_score)
-        match_score2_linear_assignment.append(match_score2)
+                                                                                       'sinkhorn_match_v2', False)
+        error_H_sinkhorn_v2_R.append(error_H)
+        match_score_sinkhorn_v2_R.append(match_score)
+        match_score2_sinkhorn_v2_R.append(match_score2)
+
+        # H1_dest_to_src, match_score, match_score2, error_H, H_mean, H_std = make_match(path1, path2, path3,
+        #                                                                                'linear_assignment_match')
+        # error_H_linear_assignment.append(error_H)
+        # match_score_linear_assignment.append(match_score)
+        # match_score2_linear_assignment.append(match_score2)
         print()
 
     fig = plt.figure(figsize=(10, 10))
     plt.subplot(1, 2, 1)
     plt.title('error_H')
-    plt.plot(error_H_sinkhorn, 'or', label='sinkhorn')
-    plt.plot(error_H_sinkhorn_v2, 'oc', label='sinkhorn_v2')
-    plt.plot(error_H_knn_v2, 'og', label='knn_v2')
-    plt.plot(error_H_linear_assignment, 'ok', label='linear_assignment_match')
+    plt.plot(error_H_sinkhorn_M, 'or', label='sinkhorn MS')
+    plt.plot(error_H_sinkhorn_R, 'or', label='sinkhorn RANSAC')
+    plt.plot(error_H_sinkhorn_v2_M, 'oc', label='sinkhorn+ MS')
+    plt.plot(error_H_sinkhorn_v2_R, 'oc', label='sinkhorn+ RANSAC')
+    # plt.plot(error_H_knn_v2, 'og', label='knn_v2')
+    # plt.plot(error_H_linear_assignment, 'ok', label='linear_assignment_match')
     plt.legend()
     plt.subplot(1, 2, 2)
     plt.title('H mean difficult')
     plt.plot(mean_H, 'ob')
-    fig.savefig('../graphs/3/errorH.png')
+    fig.savefig('../graphs/5/errorH.png')
 
     fig = plt.figure(figsize=(10, 10))
     plt.title('match_score')
     ax = plt.gca()
     ax.set_ylim([0, 1])
-    plt.plot(match_score_sinkhorn, 'or', label='sinkhorn')
-    plt.plot(match_score_sinkhorn_v2, 'oc', label='sinkhorn_v2')
-    plt.plot(match_score_knn_v2, 'og', label='knn_v2')
-    plt.plot(match_score_linear_assignment, 'ok', label='linear_assignment_match')
+    plt.plot(match_score_sinkhorn_M, 'or', label='sinkhorn MS')
+    plt.plot(match_score_sinkhorn_R, 'or', label='sinkhorn RANSAC')
+    plt.plot(match_score_sinkhorn_v2_M, 'oc', label='sinkhorn+ MS')
+    plt.plot(match_score_sinkhorn_v2_R, 'oc', label='sinkhorn+ RANSAC')
     plt.legend()
-    fig.savefig('../graphs/3/MIJscore.png')
+    fig.savefig('../graphs/5/MIJscore.png')
 
     # A graph that shows the MIJ_score average according to each algorithm
     mean_MIJ_score = []
-    mean_MIJ_score.append(np.sum(match_score_sinkhorn) / len(match_score_sinkhorn))
-    mean_MIJ_score.append(np.sum(match_score_sinkhorn_v2) / len(match_score_sinkhorn_v2))
-    mean_MIJ_score.append(np.sum(match_score_knn_v2) / len(match_score_knn_v2))
-    mean_MIJ_score.append(np.sum(match_score_linear_assignment) / len(match_score_linear_assignment))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn_M) / len(match_score_sinkhorn_M))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn_R) / len(match_score_sinkhorn_R))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn_v2_M) / len(match_score_sinkhorn_v2_M))
+    mean_MIJ_score.append(np.sum(match_score_sinkhorn_v2_R) / len(match_score_sinkhorn_v2_R))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean_match_score')
-    labels = ['sinkhorn', 'sinkhorn_v2', 'knn_v2', 'linear_assignment']  # 'sinkhorn2', 'knn',
+    labels = ['sinkhorn\nMS', 'sinkhorn\nRANSAC', 'sinkhorn+\nMS', 'sinkhorn+\nRANSAC']  # 'sinkhorn2', 'knn',
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../graphs/3/meanMatchScore.png')
+    fig.savefig('../graphs/5/meanMatchScore.png')
     print("mean match score:", mean_MIJ_score)
 
     mean_MIJ_score = []
-    mean_MIJ_score.append(np.sum(match_score2_sinkhorn) / len(match_score2_sinkhorn))
-    mean_MIJ_score.append(np.sum(match_score2_sinkhorn_v2) / len(match_score2_sinkhorn_v2))
-    mean_MIJ_score.append(np.sum(match_score2_knn_v2) / len(match_score2_knn_v2))
-    mean_MIJ_score.append(np.sum(match_score2_linear_assignment) / len(match_score2_linear_assignment))
+    mean_MIJ_score.append(np.sum(match_score2_sinkhorn_M) / len(match_score2_sinkhorn_M))
+    mean_MIJ_score.append(np.sum(match_score2_sinkhorn_R) / len(match_score2_sinkhorn_R))
+    mean_MIJ_score.append(np.sum(match_score2_sinkhorn_v2_M) / len(match_score2_sinkhorn_v2_M))
+    mean_MIJ_score.append(np.sum(match_score2_sinkhorn_v2_R) / len(match_score2_sinkhorn_v2_R))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean M score:')
-    labels = ['sinkhorn', 'sinkhorn_v2', 'knn_v2', 'linear_assignment']  # 'sinkhorn2', 'knn',
+    labels = ['sinkhorn\nMS', 'sinkhorn\nRANSAC', 'sinkhorn+\nMS', 'sinkhorn+\nRANSAC']  # 'sinkhorn2', 'knn',
     ax = plt.gca()
     ax.set_ylim([0, 1])
     plt.bar(labels, mean_MIJ_score, width=0.4)
-    fig.savefig('../graphs/3/meanMScore.png')
+    fig.savefig('../graphs/5/meanMScore.png')
     print("mean M score:", mean_MIJ_score)
 
     # A graph that shows the H_error average according to each algorithm
     mean_H_error = []
-    mean_H_error.append(np.sum(error_H_sinkhorn) / len(error_H_sinkhorn))
-    mean_H_error.append(np.sum(error_H_sinkhorn_v2) / len(error_H_sinkhorn_v2))
-    mean_H_error.append(np.sum(error_H_knn_v2) / len(error_H_knn_v2))
-    mean_H_error.append(np.sum(error_H_linear_assignment) / len(error_H_linear_assignment))
+    mean_H_error.append(np.sum(error_H_sinkhorn_M) / len(error_H_sinkhorn_M))
+    mean_H_error.append(np.sum(error_H_sinkhorn_R) / len(error_H_sinkhorn_R))
+    mean_H_error.append(np.sum(error_H_sinkhorn_v2_M) / len(error_H_sinkhorn_v2_M))
+    mean_H_error.append(np.sum(error_H_sinkhorn_v2_R) / len(error_H_sinkhorn_v2_R))
     fig = plt.figure(figsize=(5, 5))
     plt.title('mean_H_error')
-    labels = ['sinkhorn', 'sinkhorn_v2', 'knn_v2', 'linear_assignment']  # 'sinkhorn2', 'knn',
+    labels = ['sinkhorn\nMS', 'sinkhorn\nRANSAC', 'sinkhorn+\nMS', 'sinkhorn+\nRANSAC']  # 'sinkhorn2', 'knn',
     plt.bar(labels, mean_H_error, width=0.4)
-    fig.savefig('../graphs/3/meanHScore.png')
+    fig.savefig('../graphs/5/meanHScore.png')
     print("mean_H_error: ", mean_H_error)
     plt.show()
 
@@ -821,8 +835,8 @@ def sinkhorn_compare(folder_path, folder_number):
     plt.show()
 
 if __name__ == '__main__':
-    folder_path = '../../data/resize_photos/'
-    # folder_path = '../../data/test/'
+    # folder_path = '../../data/resize_photos/'
+    folder_path = '../../data/test/'
     folder_number = 1
     # sinkhorn_compare(folder_path, folder_number)
     main(folder_path, folder_number)
