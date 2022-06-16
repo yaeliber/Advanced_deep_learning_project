@@ -1,6 +1,5 @@
-# Find the best match between images
-# מציאת התאמה טובה ביותר בין תמונות
-
+# Find the best match between key points in different images
+# מציאת ההתאמה הטובה ביותר בין נקודות מפתח בתמונות שונות
 
 ## נאום המעלית
 
